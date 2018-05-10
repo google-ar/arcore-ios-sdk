@@ -31,15 +31,7 @@
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   [UIApplication sharedApplication].idleTimerDisabled = YES;
 
-  self.window = [[UIWindow alloc] init];
-
   [FIRApp configure];
-
-  UIStoryboard* storyBoard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-  ExampleViewController* viewController = [storyBoard instantiateInitialViewController];
-  self.window.rootViewController = viewController;
-
-  [self.window makeKeyAndVisible];
 
   return YES;
 }
