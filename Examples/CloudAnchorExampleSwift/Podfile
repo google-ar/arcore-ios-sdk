@@ -1,0 +1,8 @@
+platform :ios, '11.0'
+
+target 'CloudAnchorExampleSwift' do
+  use_frameworks!
+  pod 'ARCore', '~> 1.2.0'
+  pod 'Firebase/Core', '~> 5.0.0'
+  pod 'Firebase/Database', '~> 5.0.0'
+end

@@ -14,31 +14,26 @@
  * limitations under the License.
  */
 
-#import "AppDelegate.h"
+import UIKit
 
-#import <FirebaseCore/FirebaseCore.h>
+import Firebase
 
-#import "ExampleViewController.h"
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate {
 
-@interface AppDelegate ()
-
-@end
-
-@implementation AppDelegate
+    var window: UIWindow?
 
 
-- (BOOL)application:(UIApplication *)application
-    didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-  [UIApplication sharedApplication].idleTimerDisabled = YES;
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+        application.isIdleTimerDisabled = true
 
-  [FIRApp configure];
+        FirebaseApp.configure()
 
-  return YES;
+        return true
+    }
+
+    func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+        return .portrait
+    }
 }
 
-- (UIInterfaceOrientationMask)application:(UIApplication *)application
-  supportedInterfaceOrientationsForWindow:(UIWindow *)window {
-  return UIInterfaceOrientationMaskPortrait;
-}
-
-@end
