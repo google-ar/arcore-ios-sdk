@@ -35,7 +35,7 @@ typedef NS_ENUM(NSInteger, HelloARState) {
   HelloARStateResolvingFinished
 };
 
-@interface ExampleViewController () <ARSCNViewDelegate, ARSessionDelegate, GARSessionDelegate>
+@interface ExampleViewController () <UINavigationControllerDelegate, ARSCNViewDelegate, ARSessionDelegate, GARSessionDelegate>
 
 @property(nonatomic, strong) GARSession *gSession;
 
@@ -126,16 +126,15 @@ typedef NS_ENUM(NSInteger, HelloARState) {
                    return;
                  }
 
-                 NSString *anchorId = nil;
                  if ([snapshot.value isKindOfClass:[NSDictionary class]]) {
                    NSDictionary *value = (NSDictionary *)snapshot.value;
-                   anchorId = value[@"hosted_anchor_id"];
-                 }
+                   NSString *anchorId = value[@"hosted_anchor_id"];
 
-                 if (anchorId) {
-                   [[[strongSelf.firebaseReference child:@"hotspot_list"] child:roomCode]
+                   if (anchorId) {
+                     [[[strongSelf.firebaseReference child:@"hotspot_list"] child:roomCode]
                        removeAllObservers];
-                   [strongSelf resolveAnchorWithIdentifier:anchorId];
+                     [strongSelf resolveAnchorWithIdentifier:anchorId];
+                   }
                  }
                });
              }];
@@ -153,7 +152,7 @@ typedef NS_ENUM(NSInteger, HelloARState) {
   [self.sceneView.session addAnchor:self.arAnchor];
 
   // To share an anchor, we call host anchor here on the ARCore session.
-  // session:disHostAnchor: session:didFailToHostAnchor: will get called appropriately.
+  // session:didHostAnchor: session:didFailToHostAnchor: will get called appropriately.
   self.garAnchor = [self.gSession hostCloudAnchor:self.arAnchor error:nil];
   [self enterState:HelloARStateHosting];
 }

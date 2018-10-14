@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14109" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BV1-FR-VrT">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BV1-FR-VrT">
     <device id="retina5_9" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
-        <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
-        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -123,7 +122,7 @@
                         <viewLayoutGuide key="safeArea" id="Dif-Mu-SGU"/>
                     </view>
                     <connections>
-                        <outlet property="hostButton" destination="UTo-R4-sJi" id="wLk-zF-epd"/>
+                        <outlet property="hostButton" destination="UTo-R4-sJi" id="OF3-c3-4N1"/>
                         <outlet property="messageLabel" destination="175-A6-xYf" id="PgA-F8-Aax"/>
                         <outlet property="resolveButton" destination="Ngp-AH-x9i" id="s9d-7I-Smm"/>
                         <outlet property="roomCodeLabel" destination="Oin-eb-0c4" id="ivr-Ld-Wqv"/>
