@@ -1,6 +1,6 @@
 # Google ARCore SDK For iOS
 
-Copyright (c) 2018 Google Inc. All rights reserved.
+Copyright (c) 2018 Google LLC. All rights reserved.
 
 This SDK provides access to all ARCore cross-platform features like cloud
 anchors.
