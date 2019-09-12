@@ -1,0 +1,6 @@
+Setup instructions for AugmentedFacesExample app.
+
+To use:
+1) Run pod install.
+2) Open AugmentedFacesExample.xcworkspace.
+3) Change bundle ID, so that you can sign the app with your team.

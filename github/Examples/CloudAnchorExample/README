@@ -1,0 +1,9 @@
+Setup instructions for CloudAnchorExample sample app
+
+To use:
+1) The sample app uses Firebase. See https://firebase.google.com/docs/ios/setup for setup instructions.
+   Download the GoogleService-Info.plist file and place it next to Info.plist.
+2) Modify ExampleViewController.m to use your API key (search for sessionWithAPIKey:).
+3) Run pod install.
+4) Open CloudAnchorExample.xcworkspace.
+5) Change bundle ID, so that you can sign the app with your team.
