@@ -12,7 +12,7 @@ Please note we do not accept pull requests.
 For Cloud Anchors see the
 [Quickstart for Cloud Anchors with iOS](https://developers.google.com/ar/develop/ios/cloud-anchors-quickstart-ios).
 For Augmented faces see the
-[Quickstart for Augmented Faces with iOS](https://developers.google.com/ar/develop/ios/augmented-faces-quickstart).
+[Quickstart for Augmented Faces with iOS](https://developers.google.com/ar/develop/ios/augmented-faces/quickstart).
 
 ## API Reference
 

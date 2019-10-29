@@ -85,7 +85,8 @@ public final class FacesViewController: UIViewController {
       let scene = SCNScene(named: "Face.scnassets/fox_face.scn"),
       let modelRoot = scene.rootNode.childNode(withName: "asset", recursively: false)
     else {
-        fatalError("Failed to load face scene!")
+        NSLog("Failed to load face scene!")
+        return
     }
 
     // SceneKit uses meters for units, while the canonical face mesh asset uses centimeters.
@@ -123,7 +124,8 @@ public final class FacesViewController: UIViewController {
       AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
       let input = try? AVCaptureDeviceInput(device: device)
     else {
-      fatalError("Failed to create capture device from front camera.")
+      NSLog("Failed to create capture device from front camera.")
+      return
     }
 
     let output = AVCaptureVideoDataOutput()
@@ -147,7 +149,8 @@ public final class FacesViewController: UIViewController {
   /// Start receiving motion updates to determine device orientation for use in the face session.
   private func setupMotion() {
     guard motionManager.isDeviceMotionAvailable else {
-      fatalError("Device does not have motion sensors.")
+      NSLog("Device does not have motion sensors.")
+      return
     }
     motionManager.deviceMotionUpdateInterval = kMotionUpdateInterval
     motionManager.startDeviceMotionUpdates()
@@ -157,7 +160,8 @@ public final class FacesViewController: UIViewController {
   private func startCameraCapture() {
     getVideoPermission(permissionHandler: { granted in
       guard granted else {
-        fatalError("Permission not granted to use camera.")
+        NSLog("Permission not granted to use camera.")
+        return
       }
       self.captureSession?.startRunning()
     })

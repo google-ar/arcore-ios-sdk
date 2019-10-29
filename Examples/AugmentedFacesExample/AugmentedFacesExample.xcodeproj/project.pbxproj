@@ -13,13 +13,10 @@
 		6933B02B23172482007E1C28 /* FacesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6933B02223172481007E1C28 /* FacesViewController.swift */; };
 		6933B02C23172482007E1C28 /* Face.scnassets in Resources */ = {isa = PBXBuildFile; fileRef = 6933B02323172481007E1C28 /* Face.scnassets */; };
 		6933B02D23172482007E1C28 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6933B02423172481007E1C28 /* AppDelegate.swift */; };
-		EC23136E7A2882DB620B3750 /* libPods-FacesSample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5BC77876EF1B16229FD7361C /* libPods-FacesSample.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2031A3B1E31D24C92460DF6E /* Pods-FacesSample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FacesSample.release.xcconfig"; path = "Target Support Files/Pods-FacesSample/Pods-FacesSample.release.xcconfig"; sourceTree = "<group>"; };
-		5BC77876EF1B16229FD7361C /* libPods-FacesSample.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-FacesSample.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		692DB6DC22FCA472007A4EEF /* FacesSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FacesSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		692DB6DC22FCA472007A4EEF /* AugmentedFacesExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AugmentedFacesExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6933B01F23172481007E1C28 /* FaceMeshGeometryConverter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FaceMeshGeometryConverter.swift; sourceTree = "<group>"; };
 		6933B02023172481007E1C28 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		6933B02123172481007E1C28 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -27,7 +24,6 @@
 		6933B02323172481007E1C28 /* Face.scnassets */ = {isa = PBXFileReference; lastKnownFileType = wrapper.scnassets; path = Face.scnassets; sourceTree = "<group>"; };
 		6933B02423172481007E1C28 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		6933B02723172481007E1C28 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		CE8356A3C6BBD820857E84FC /* Pods-FacesSample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FacesSample.debug.xcconfig"; path = "Target Support Files/Pods-FacesSample/Pods-FacesSample.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -35,35 +31,25 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EC23136E7A2882DB620B3750 /* libPods-FacesSample.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		58C1197FB9C1D43992942858 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				5BC77876EF1B16229FD7361C /* libPods-FacesSample.a */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 		692DB6D322FCA472007A4EEF = {
 			isa = PBXGroup;
 			children = (
 				6933B01E23172481007E1C28 /* AugmentedFacesExample */,
 				692DB6DD22FCA472007A4EEF /* Products */,
 				96AE2E2B17F4EF661A6BFC2A /* Pods */,
-				58C1197FB9C1D43992942858 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
 		692DB6DD22FCA472007A4EEF /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				692DB6DC22FCA472007A4EEF /* FacesSample.app */,
+				692DB6DC22FCA472007A4EEF /* AugmentedFacesExample.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -85,8 +71,6 @@
 		96AE2E2B17F4EF661A6BFC2A /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				CE8356A3C6BBD820857E84FC /* Pods-FacesSample.debug.xcconfig */,
-				2031A3B1E31D24C92460DF6E /* Pods-FacesSample.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -94,23 +78,21 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		692DB6DB22FCA472007A4EEF /* FacesSample */ = {
+		692DB6DB22FCA472007A4EEF /* AugmentedFacesExample */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 692DB6EE22FCA472007A4EEF /* Build configuration list for PBXNativeTarget "FacesSample" */;
+			buildConfigurationList = 692DB6EE22FCA472007A4EEF /* Build configuration list for PBXNativeTarget "AugmentedFacesExample" */;
 			buildPhases = (
-				849BF6CE1B66348423B015DE /* [CP] Check Pods Manifest.lock */,
 				692DB6D822FCA472007A4EEF /* Sources */,
 				692DB6D922FCA472007A4EEF /* Frameworks */,
 				692DB6DA22FCA472007A4EEF /* Resources */,
-				A518DB1F7879AC558EDAE463 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = FacesSample;
+			name = AugmentedFacesExample;
 			productName = FacesSample;
-			productReference = 692DB6DC22FCA472007A4EEF /* FacesSample.app */;
+			productReference = 692DB6DC22FCA472007A4EEF /* AugmentedFacesExample.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -142,7 +124,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				692DB6DB22FCA472007A4EEF /* FacesSample */,
+				692DB6DB22FCA472007A4EEF /* AugmentedFacesExample */,
 			);
 		};
 /* End PBXProject section */
@@ -159,48 +141,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		849BF6CE1B66348423B015DE /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-FacesSample-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		A518DB1F7879AC558EDAE463 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-FacesSample/Pods-FacesSample-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-FacesSample/Pods-FacesSample-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-FacesSample/Pods-FacesSample-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		692DB6D822FCA472007A4EEF /* Sources */ = {
@@ -334,7 +274,6 @@
 		};
 		692DB6EF22FCA472007A4EEF /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CE8356A3C6BBD820857E84FC /* Pods-FacesSample.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -357,7 +296,6 @@
 		};
 		692DB6F022FCA472007A4EEF /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2031A3B1E31D24C92460DF6E /* Pods-FacesSample.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -389,7 +327,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		692DB6EE22FCA472007A4EEF /* Build configuration list for PBXNativeTarget "FacesSample" */ = {
+		692DB6EE22FCA472007A4EEF /* Build configuration list for PBXNativeTarget "AugmentedFacesExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				692DB6EF22FCA472007A4EEF /* Debug */,
