@@ -16,6 +16,8 @@
 
 #import "CloudAnchorManager.h"
 
+#import <Foundation/Foundation.h>
+
 #import <ARCore/ARCore.h>
 #import <FirebaseDatabase/FirebaseDatabase.h>
 

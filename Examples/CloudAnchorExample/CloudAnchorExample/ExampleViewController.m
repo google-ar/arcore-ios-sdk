@@ -16,14 +16,15 @@
 
 #import "ExampleViewController.h"
 
+#import "CloudAnchorManager.h"
+
 #import <dispatch/dispatch.h>
 
 #import <ARKit/ARKit.h>
-#import <ARCore/ARCore.h>
 #import <ModelIO/ModelIO.h>
 #import <SceneKit/ModelIO.h>
 
-#import "CloudAnchorManager.h"
+#import <ARCore/ARCore.h>
 
 typedef NS_ENUM(NSInteger, HelloARState) {
   HelloARStateDefault,
@@ -102,9 +103,9 @@ static NSString * const kPrivacyAlertLinkURL =
   CGPoint touchLocation = [touch locationInView:self.sceneView];
 
   NSArray *hitTestResults =
-  [self.sceneView hitTest:touchLocation
-                    types:ARHitTestResultTypeExistingPlaneUsingExtent |
-                          ARHitTestResultTypeEstimatedHorizontalPlane];
+      [self.sceneView hitTest:touchLocation
+                        types:ARHitTestResultTypeExistingPlaneUsingExtent |
+                              ARHitTestResultTypeEstimatedHorizontalPlane];
 
   if (hitTestResults.count > 0) {
     ARHitTestResult *result = [hitTestResults firstObject];
@@ -324,8 +325,8 @@ static NSString * const kPrivacyAlertLinkURL =
       return @"ErrorResolvingSdkVersionTooNew";
     case GARCloudAnchorStateErrorResolvingSdkVersionTooOld:
       return @"ErrorResolvingSdkVersionTooOld";
-    case GARCloudAnchorStateErrorServiceUnavailable:
-      return @"ErrorServiceUnavailable";
+    case GARCloudAnchorStateErrorHostingServiceUnavailable:
+      return @"ErrorHostingServiceUnavailable";
     default:
       return @"Unknown";
   }
@@ -469,7 +470,7 @@ static NSString * const kPrivacyAlertLinkURL =
     SCNPlane *plane = [SCNPlane planeWithWidth:width height:height];
 
     plane.materials.firstObject.diffuse.contents =
-        [UIColor colorWithRed:0.0f green:0.0f blue:1.0f alpha:0.3f];
+        [UIColor colorWithRed:0.0f green:0.0f blue:1.0f alpha:0.7f];
 
     SCNNode *planeNode = [SCNNode nodeWithGeometry:plane];
 

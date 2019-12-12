@@ -16,16 +16,16 @@
 
 #import "AppDelegate.h"
 
+#import "ExampleViewController.h"
+
 #import <FirebaseCore/FirebaseCore.h>
 
-#import "ExampleViewController.h"
 
 @interface AppDelegate ()
 
 @end
 
 @implementation AppDelegate
-
 
 - (BOOL)application:(UIApplication *)application
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
@@ -35,8 +35,10 @@
 
   [FIRApp configure];
 
-  UIStoryboard* storyBoard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-  ExampleViewController* viewController = [storyBoard instantiateInitialViewController];
+  UIStoryboard *storyBoard =
+      [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+  ExampleViewController *viewController =
+      [storyBoard instantiateInitialViewController];
   self.window.rootViewController = viewController;
 
   [self.window makeKeyAndVisible];
@@ -45,7 +47,7 @@
 }
 
 - (UIInterfaceOrientationMask)application:(UIApplication *)application
-  supportedInterfaceOrientationsForWindow:(UIWindow *)window {
+    supportedInterfaceOrientationsForWindow:(UIWindow *)window {
   return UIInterfaceOrientationMaskPortrait;
 }
 
