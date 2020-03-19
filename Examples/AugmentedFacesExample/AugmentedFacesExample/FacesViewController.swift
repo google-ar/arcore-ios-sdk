@@ -24,20 +24,20 @@ import ARCore
 /// Demonstrates how to use ARCore Augmented Faces with SceneKit.
 public final class FacesViewController: UIViewController {
 
-  // MARK: - Camera properties
+  // MARK: - Camera / Scene properties
 
-  private let kCameraZNear = CGFloat(0.05)
-  private let kCameraZFar = CGFloat(100)
   private var captureDevice: AVCaptureDevice?
   private var captureSession: AVCaptureSession?
+  private var videoFieldOfView = Float(0)
   private lazy var cameraImageLayer = CALayer()
-
-  // MARK: - Scene properties
-
-  private let kCentimetersToMeters: Float = 0.01
-  private lazy var faceMeshConverter = FaceMeshGeometryConverter()
   private lazy var sceneView = SCNView()
   private lazy var sceneCamera = SCNCamera()
+  private lazy var motionManager = CMMotionManager()
+
+  // MARK: - Face properties
+
+  private var faceSession : GARAugmentedFaceSession?
+  private lazy var faceMeshConverter = FaceMeshGeometryConverter()
   private lazy var faceNode = SCNNode()
   private lazy var faceTextureNode = SCNNode()
   private lazy var faceOccluderNode = SCNNode()
@@ -46,17 +46,6 @@ public final class FacesViewController: UIViewController {
   private var noseTipNode: SCNNode?
   private var foreheadLeftNode: SCNNode?
   private var foreheadRightNode: SCNNode?
-
-  // MARK: - Motion properties
-
-  private let kMotionUpdateInterval: TimeInterval = 0.1
-  private lazy var motionManager = CMMotionManager()
-
-  // MARK: - Face Session properties
-
-  private var faceSession : GARAugmentedFaceSession?
-  private var currentFaceFrame: GARAugmentedFaceFrame?
-  private var nextFaceFrame: GARAugmentedFaceFrame?
 
   // MARK: - Implementation methods
 
@@ -67,13 +56,7 @@ public final class FacesViewController: UIViewController {
     setupCamera()
     setupMotion()
 
-    do {
-      let fieldOfView = captureDevice?.activeFormat.videoFieldOfView ?? 0
-      faceSession = try GARAugmentedFaceSession(fieldOfView: fieldOfView)
-      faceSession?.delegate = self
-    } catch let error as NSError {
-      NSLog("Failed to initialize Face Session with error: %@", error.description)
-    }
+    faceSession = try! GARAugmentedFaceSession(fieldOfView: videoFieldOfView)
   }
 
   /// Create the scene view from a scene and supporting nodes, and add to the view.
@@ -84,13 +67,10 @@ public final class FacesViewController: UIViewController {
     guard let faceImage = UIImage(named: "Face.scnassets/face_texture.png"),
       let scene = SCNScene(named: "Face.scnassets/fox_face.scn"),
       let modelRoot = scene.rootNode.childNode(withName: "asset", recursively: false)
-    else {
-        NSLog("Failed to load face scene!")
-        return
-    }
+    else { fatalError("Failed to load face scene!") }
 
     // SceneKit uses meters for units, while the canonical face mesh asset uses centimeters.
-    modelRoot.simdScale = simd_float3(1, 1, 1) * kCentimetersToMeters
+    modelRoot.simdScale = simd_float3(1, 1, 1) * 0.01
     foreheadLeftNode = modelRoot.childNode(withName: "FOREHEAD_LEFT", recursively: true)
     foreheadRightNode = modelRoot.childNode(withName: "FOREHEAD_RIGHT", recursively: true)
     noseTipNode = modelRoot.childNode(withName: "NOSE_TIP", recursively: true)
@@ -109,6 +89,8 @@ public final class FacesViewController: UIViewController {
     sceneView.rendersContinuously = true
     sceneView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     sceneView.backgroundColor = .clear
+    // Flip 'x' to mirror content to mimic 'selfie' mode
+    sceneView.layer.transform = CATransform3DMakeScale(-1, 1, 1)
     view.addSubview(sceneView)
 
     faceTextureMaterial.diffuse.contents = faceImage
@@ -139,11 +121,20 @@ public final class FacesViewController: UIViewController {
     captureSession = session
     captureDevice = device
 
+    videoFieldOfView = captureDevice?.activeFormat.videoFieldOfView ?? 0
+
     cameraImageLayer.contentsGravity = .center
-    cameraImageLayer.frame = sceneView.bounds
+    cameraImageLayer.frame = self.view.bounds
     view.layer.insertSublayer(cameraImageLayer, at: 0)
 
-    startCameraCapture()
+    // Start capturing images from the capture session once permission is granted.
+    getVideoPermission(permissionHandler: { granted in
+      guard granted else {
+        NSLog("Permission not granted to use camera.")
+        return
+      }
+      self.captureSession?.startRunning()
+    })
   }
 
   /// Start receiving motion updates to determine device orientation for use in the face session.
@@ -152,19 +143,8 @@ public final class FacesViewController: UIViewController {
       NSLog("Device does not have motion sensors.")
       return
     }
-    motionManager.deviceMotionUpdateInterval = kMotionUpdateInterval
+    motionManager.deviceMotionUpdateInterval = 0.01
     motionManager.startDeviceMotionUpdates()
-  }
-
-  /// Start capturing images from the capture session once permission is granted.
-  private func startCameraCapture() {
-    getVideoPermission(permissionHandler: { granted in
-      guard granted else {
-        NSLog("Permission not granted to use camera.")
-        return
-      }
-      self.captureSession?.startRunning()
-    })
   }
 
   /// Get permission to use device camera.
@@ -223,37 +203,7 @@ extension FacesViewController : AVCaptureVideoDataOutputSampleBufferDelegate {
     let rotation =  2 * .pi - atan2(deviceMotion.gravity.x, deviceMotion.gravity.y) + .pi / 2
     let rotationDegrees = (UInt)(rotation * 180 / .pi) % 360
 
-    faceSession?.update(
-      with: imgBuffer,
-      timestamp: frameTime,
-      recognitionRotation: rotationDegrees)
-  }
-
-}
-
-// MARK: - Face Session delegate
-
-extension FacesViewController : GARAugmentedFaceSessionDelegate {
-
-  public func didUpdate(_ frame: GARAugmentedFaceFrame) {
-    // To present the AR content mirrored (as is normal with a front facing camera), pass 'true' to
-    // the 'mirrored' param, which flips the projection matrix along the long axis of the
-    // 'presentationOrientation'. This requires the winding order to be changed from
-    // counter-clockwise to clockwise in order to render correctly. However, due to an issue in
-    // SceneKit on iOS >= 12 which causes the renderer to not respect the winding order set, we set
-    // 'mirrored' to 'false' and instead flip the sceneView along the same axis.
-    // https://openradar.appspot.com/6699866
-    sceneCamera.projectionTransform = SCNMatrix4.init(
-      frame.projectionMatrix(
-        forViewportSize: sceneView.bounds.size,
-        presentationOrientation: .portrait,
-        mirrored: false,
-        zNear: kCameraZNear,
-        zFar: kCameraZFar)
-    )
-    sceneView.layer.transform = CATransform3DMakeScale(-1, 1, 1)
-
-    nextFaceFrame = frame
+    faceSession?.update(with: imgBuffer, timestamp: frameTime, recognitionRotation: rotationDegrees)
   }
 
 }
@@ -263,11 +213,9 @@ extension FacesViewController : GARAugmentedFaceSessionDelegate {
 extension FacesViewController : SCNSceneRendererDelegate {
 
   public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-    guard nextFaceFrame != nil && nextFaceFrame != currentFaceFrame else { return }
+    guard let frame = faceSession?.currentFrame else { return }
 
-    currentFaceFrame = nextFaceFrame
-
-    if let face = currentFaceFrame?.face {
+    if let face = frame.face {
       faceTextureNode.geometry = faceMeshConverter.geometryFromFace(face)
       faceTextureNode.geometry?.firstMaterial = faceTextureMaterial
       faceOccluderNode.geometry = faceTextureNode.geometry?.copy() as? SCNGeometry
@@ -279,17 +227,19 @@ extension FacesViewController : SCNSceneRendererDelegate {
       updateTransform(face.transform(for: .foreheadRight), for: foreheadRightNode)
     }
 
-    // Only show AR content when a face is detected
-    sceneView.scene?.rootNode.isHidden = currentFaceFrame?.face == nil
-  }
+    // Set the scene camera's transform to the projection matrix for this frame.
+    DispatchQueue.main.sync {
+      sceneCamera.projectionTransform = SCNMatrix4.init(
+        frame.projectionMatrix(
+          forViewportSize: sceneView.bounds.size,
+          presentationOrientation: .portrait,
+          mirrored: false,
+          zNear: 0.05,
+          zFar: 100)
+      )
+    }
 
-  public func renderer(
-    _ renderer: SCNSceneRenderer,
-    didRenderScene scene: SCNScene,
-    atTime time: TimeInterval
-    ) {
-    guard let frame = currentFaceFrame else { return }
-
+    // Update the camera image layer's transform to the display transform for this frame.
     CATransaction.begin()
     CATransaction.setAnimationDuration(0)
     cameraImageLayer.contents = frame.capturedImage as CVPixelBuffer
@@ -300,6 +250,9 @@ extension FacesViewController : SCNSceneRendererDelegate {
         mirrored: true)
     )
     CATransaction.commit()
+
+    // Only show AR content when a face is detected.
+    sceneView.scene?.rootNode.isHidden = frame.face == nil
   }
 
 }
