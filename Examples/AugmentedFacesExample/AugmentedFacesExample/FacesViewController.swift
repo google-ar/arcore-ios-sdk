@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import UIKit
+import AVFoundation
 import CoreMedia
 import CoreMotion
 import SceneKit
-import AVFoundation
-import ARCore
+import UIKit
+
+  import ARCore
 
 /// Demonstrates how to use ARCore Augmented Faces with SceneKit.
 public final class FacesViewController: UIViewController {
@@ -36,7 +37,7 @@ public final class FacesViewController: UIViewController {
 
   // MARK: - Face properties
 
-  private var faceSession : GARAugmentedFaceSession?
+  private var faceSession: GARAugmentedFaceSession?
   private lazy var faceMeshConverter = FaceMeshGeometryConverter()
   private lazy var faceNode = SCNNode()
   private lazy var faceTextureNode = SCNNode()
@@ -96,14 +97,15 @@ public final class FacesViewController: UIViewController {
     faceTextureMaterial.diffuse.contents = faceImage
     // SCNMaterial does not premultiply alpha even with blendMode set to alpha, so do it manually.
     faceTextureMaterial.shaderModifiers =
-        [SCNShaderModifierEntryPoint.fragment : "_output.color.rgb *= _output.color.a;"]
+      [SCNShaderModifierEntryPoint.fragment: "_output.color.rgb *= _output.color.a;"]
     faceOccluderMaterial.colorBufferWriteMask = []
   }
 
   /// Setup a camera capture session from the front camera to receive captures.
   private func setupCamera() {
-    guard let device =
-      AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
+    guard
+      let device =
+        AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
       let input = try? AVCaptureDeviceInput(device: device)
     else {
       NSLog("Failed to create capture device from front camera.")
@@ -152,7 +154,7 @@ public final class FacesViewController: UIViewController {
   /// - Parameters:
   ///   - permissionHandler: The closure to call with whether permission was granted when
   ///     permission is determined.
-  private func getVideoPermission(permissionHandler: @escaping (Bool) -> ()) {
+  private func getVideoPermission(permissionHandler: @escaping (Bool) -> Void) {
     switch AVCaptureDevice.authorizationStatus(for: .video) {
     case .authorized:
       permissionHandler(true)
@@ -185,13 +187,13 @@ public final class FacesViewController: UIViewController {
 
 // MARK: - Camera delegate
 
-extension FacesViewController : AVCaptureVideoDataOutputSampleBufferDelegate {
+extension FacesViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
 
   public func captureOutput(
     _ output: AVCaptureOutput,
     didOutput sampleBuffer: CMSampleBuffer,
     from connection: AVCaptureConnection
-    ) {
+  ) {
     guard let imgBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
       let deviceMotion = motionManager.deviceMotion
     else { return }
@@ -200,7 +202,7 @@ extension FacesViewController : AVCaptureVideoDataOutputSampleBufferDelegate {
 
     // Use the device's gravity vector to determine which direction is up for a face. This is the
     // positive counter-clockwise rotation of the device relative to landscape left orientation.
-    let rotation =  2 * .pi - atan2(deviceMotion.gravity.x, deviceMotion.gravity.y) + .pi / 2
+    let rotation = 2 * .pi - atan2(deviceMotion.gravity.x, deviceMotion.gravity.y) + .pi / 2
     let rotationDegrees = (UInt)(rotation * 180 / .pi) % 360
 
     faceSession?.update(with: imgBuffer, timestamp: frameTime, recognitionRotation: rotationDegrees)
@@ -210,7 +212,7 @@ extension FacesViewController : AVCaptureVideoDataOutputSampleBufferDelegate {
 
 // MARK: - Scene Renderer delegate
 
-extension FacesViewController : SCNSceneRendererDelegate {
+extension FacesViewController: SCNSceneRendererDelegate {
 
   public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
     guard let frame = faceSession?.currentFrame else { return }
@@ -228,16 +230,14 @@ extension FacesViewController : SCNSceneRendererDelegate {
     }
 
     // Set the scene camera's transform to the projection matrix for this frame.
-    DispatchQueue.main.sync {
-      sceneCamera.projectionTransform = SCNMatrix4.init(
-        frame.projectionMatrix(
-          forViewportSize: sceneView.bounds.size,
-          presentationOrientation: .portrait,
-          mirrored: false,
-          zNear: 0.05,
-          zFar: 100)
-      )
-    }
+    sceneCamera.projectionTransform = SCNMatrix4.init(
+      frame.projectionMatrix(
+        forViewportSize: cameraImageLayer.bounds.size,
+        presentationOrientation: .portrait,
+        mirrored: false,
+        zNear: 0.05,
+        zFar: 100)
+    )
 
     // Update the camera image layer's transform to the display transform for this frame.
     CATransaction.begin()
