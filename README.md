@@ -31,3 +31,12 @@ This can be done by displaying a prominent link to the site "How Google uses
 data when you use our partners' sites or apps", (located at
 www.google.com/policies/privacy/partners/, or any other URL Google may provide
 from time to time).
+
+## Deprecation policy
+
+Apps built with **ARCore SDK 1.12.0 or higher** are covered by the
+[Cloud Anchor API deprecation policy](//developers.google.com/ar/distribute/deprecation-policy).
+
+Apps built with **ARCore SDK 1.11.0 or lower** will be unable to host or resolve
+Cloud Anchors beginning December 2020 due to the SDK's use of an older,
+deprecated ARCore Cloud Anchor service.

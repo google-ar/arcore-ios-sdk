@@ -42,14 +42,23 @@
     _sceneView = sceneView;
     _sceneView.session.delegate = self;
 
-    self.firebaseReference = [[FIRDatabase database] reference];
+    _firebaseReference = [[FIRDatabase database] reference];
 
-    self.gSession = [GARSession sessionWithAPIKey:@"your-api-key"
-                                 bundleIdentifier:nil
-                                            error:nil];
-    self.gSession.delegateQueue = dispatch_get_main_queue();
+    NSError *error = nil;
+
+    _gSession = [GARSession sessionWithAPIKey:@"your-api-key" bundleIdentifier:nil error:&error];
+
+    if (_gSession == nil) {
+      NSString *alertWindowTitle = @"An fatal error occurred. Will disable the UI interaction.";
+      NSString *alertMessage =
+          [NSString stringWithFormat:@"Failed to create session. Error description: %@",
+                                     [error localizedDescription]];
+      [self popupAlertWindowOnError:alertWindowTitle alertMessage:alertMessage];
+      return nil;
+    }
+
+    _gSession.delegateQueue = dispatch_get_main_queue();
   }
-
   return self;
 }
 
@@ -62,10 +71,12 @@
 
 - (void)session:(ARSession *)session didUpdateFrame:(ARFrame *)frame {
   // Forward ARKit's update to ARCore session
-  GARFrame *garFrame = [self.gSession update:frame error:nil];
+  NSError *error = nil;
+  GARFrame *garFrame = [self.gSession update:frame error:&error];
 
+  // Error in frame update is not fatal. We pass error information to delegate.
   // Pass message to delegate for state management
-  [self.delegate cloudAnchorManager:self didUpdateFrame:garFrame];
+  [self.delegate cloudAnchorManager:self didUpdateFrame:garFrame error:error];
 }
 
 #pragma mark - Public
@@ -90,12 +101,12 @@
         NSNumber *timestamp = [NSNumber numberWithLongLong:timestampInteger];
 
         NSDictionary<NSString *, NSObject *> *room = @{
-                                                      @"display_name" : [newRoomNumber stringValue],
-                                                      @"updated_at_timestamp" : timestamp,
-                                                      };
+          @"display_name" : [newRoomNumber stringValue],
+          @"updated_at_timestamp" : timestamp,
+        };
 
-        [[[strongSelf.firebaseReference child:@"hotspot_list"]
-            child:[newRoomNumber stringValue]] setValue:room];
+        [[[strongSelf.firebaseReference child:@"hotspot_list"] child:[newRoomNumber stringValue]]
+            setValue:room];
 
         currentData.value = newRoomNumber;
 
@@ -109,6 +120,12 @@
         }
 
         if (error) {
+          NSString *alertWindowTitle = @"An error occurred";
+          NSString *alertMessage =
+              [NSString stringWithFormat:@"CloudAnchorManager:createRoom: Error description: %@",
+                                         [error localizedDescription]];
+          [self popupAlertWindowOnError:alertWindowTitle alertMessage:alertMessage];
+
           [strongSelf.delegate cloudAnchorManager:strongSelf failedToCreateRoomWithError:error];
         } else {
           [strongSelf.delegate cloudAnchorManager:strongSelf
@@ -122,8 +139,8 @@
       setValue:anchor.cloudIdentifier];
   long long timestampInteger = (long long)([[NSDate date] timeIntervalSince1970] * 1000);
   NSNumber *timestamp = [NSNumber numberWithLongLong:timestampInteger];
-  [[[[self.firebaseReference child:@"hotspot_list"] child:roomCode]
-      child:@"updated_at_timestamp"] setValue:timestamp];
+  [[[[self.firebaseReference child:@"hotspot_list"] child:roomCode] child:@"updated_at_timestamp"]
+      setValue:timestamp];
 }
 
 - (void)resolveAnchorWithRoomCode:(NSString *)roomCode
@@ -131,28 +148,55 @@
   __weak CloudAnchorManager *weakSelf = self;
   [[[self.firebaseReference child:@"hotspot_list"] child:roomCode]
       observeEventType:FIRDataEventTypeValue
-      withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
-        CloudAnchorManager *strongSelf = weakSelf;
-        if (strongSelf == nil) {
-          return;
-        }
+             withBlock:^(FIRDataSnapshot *_Nonnull snapshot) {
+               CloudAnchorManager *strongSelf = weakSelf;
+               if (strongSelf == nil) {
+                 return;
+               }
 
-        NSString *anchorId = nil;
-        if ([snapshot.value isKindOfClass:[NSDictionary class]]) {
-          NSDictionary<NSString *, NSObject *> *value = (NSDictionary *)snapshot.value;
-          anchorId = (NSString *)value[@"hosted_anchor_id"];
-        }
+               NSString *anchorId = nil;
+               if ([snapshot.value isKindOfClass:[NSDictionary class]]) {
+                 NSDictionary<NSString *, NSObject *> *value = (NSDictionary *)snapshot.value;
+                 anchorId = (NSString *)value[@"hosted_anchor_id"];
+               }
 
-        if (anchorId) {
-          [[[strongSelf.firebaseReference child:@"hotspot_list"] child:roomCode]
-              removeAllObservers];
+               if (anchorId) {
+                 [[[strongSelf.firebaseReference child:@"hotspot_list"] child:roomCode]
+                     removeAllObservers];
 
-          // Now that we have the anchor ID from firebase, we resolve the anchor.
-          // Success and failure of this call is handled by the delegate methods
-          // session:didResolveAnchor and session:didFailToResolveAnchor appropriately.
-          completion([strongSelf.gSession resolveCloudAnchorWithIdentifier:anchorId error:nil]);
-        }
-      }];
+                 // Now that we have the anchor ID from firebase, we resolve the anchor.
+                 // Synchronous failures will return nil. The causes may be invalid arguments, etc.
+                 // Asynchronous failures (garAnchor is returned as a nonnull) is handled by
+                 // session:didFailToResolveAnchor. Success is handled by the delegate methods
+                 // session:didResolveAnchor. When garAnchor is returned as a nil, it means
+                 // synchronous failures happened where no delegate is called. When garAnchor is
+                 // returned as a nonnull, while some asynchronous failure happened, it is handled
+                 // by session:didFailToResolveAnchor.
+                 NSError *error = nil;
+                 GARAnchor *garAnchor =
+                     [strongSelf.gSession resolveCloudAnchorWithIdentifier:anchorId error:&error];
+
+                 // Synchronous failure. Refer to the code
+                 if (garAnchor == nil) {
+                   NSString *alertWindowTitle = @"An error occurred";
+                   NSString *alertMessage = [NSString
+                       stringWithFormat:
+                           @"GARAnchor is returned as a nil in "
+                           @"CloudAnchorManager:resolveAnchorWithRoomCode. Error description: %@",
+                           [error localizedDescription]];
+                   [self popupAlertWindowOnError:alertWindowTitle alertMessage:alertMessage];
+
+                   // Synchronous error in GARSession:resolveCloudAnchorWithIdentifier.
+                   // Pass message to delegate for state management
+                   [self.delegate cloudAnchorManager:self
+                       resolveCloudAnchorReturnNilWithError:error];
+
+                   return;
+                 }
+
+                 completion(garAnchor);
+               }
+             }];
 }
 
 - (void)stopResolvingAnchorWithRoomCode:(NSString *)roomCode {
@@ -167,6 +211,33 @@
 
 - (void)removeAnchor:(GARAnchor *)anchor {
   [self.gSession removeAnchor:anchor];
+}
+
+- (void)popupAlertWindowOnError:(NSString *)alertWindowTitle alertMessage:(NSString *)alertMessage {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    UIAlertController *alert =
+        [UIAlertController alertControllerWithTitle:alertWindowTitle
+                                            message:alertMessage
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"OK"
+                                                            style:UIAlertActionStyleDefault
+                                                          handler:^(UIAlertAction *action){
+                                                          }];
+
+    [alert addAction:defaultAction];
+
+    id rootViewController = [UIApplication sharedApplication].delegate.window.rootViewController;
+    if ([rootViewController isKindOfClass:[UINavigationController class]]) {
+      rootViewController =
+          ((UINavigationController *)rootViewController).viewControllers.firstObject;
+    }
+    if ([rootViewController isKindOfClass:[UITabBarController class]]) {
+      rootViewController = ((UITabBarController *)rootViewController).selectedViewController;
+    }
+
+    [rootViewController presentViewController:alert animated:YES completion:nil];
+  });
 }
 
 @end

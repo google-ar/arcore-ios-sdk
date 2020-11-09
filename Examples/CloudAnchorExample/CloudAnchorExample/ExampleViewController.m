@@ -34,7 +34,8 @@ typedef NS_ENUM(NSInteger, HelloARState) {
   HelloARStateHostingFinished,
   HelloARStateEnterRoomCode,
   HelloARStateResolving,
-  HelloARStateResolvingFinished
+  HelloARStateResolvingFinished,
+  HelloARStateCloudAnchorManagerInitFail
 };
 
 static NSString * const kPrivacyNoticeKey = @"PrivacyNoticeAccepted";
@@ -86,8 +87,12 @@ static NSString * const kPrivacyAlertLinkURL =
 
   [self.messageLabel setNumberOfLines:3];
 
-
   self.cloudAnchorManager = [[CloudAnchorManager alloc] initWithARSceneView:self.sceneView];
+  if (self.cloudAnchorManager == nil) {
+    [self enterState:HelloARStateCloudAnchorManagerInitFail];
+    return;
+  }
+
   self.cloudAnchorManager.delegate = self;
   self.sceneView.delegate = self;
 
@@ -173,13 +178,35 @@ static NSString * const kPrivacyAlertLinkURL =
   [self enterState:HelloARStateDefault];
 }
 
-- (void)cloudAnchorManager:(CloudAnchorManager *)manager didUpdateFrame:(GARFrame *)garFrame {
+- (void)cloudAnchorManager:(CloudAnchorManager *)manager
+            didUpdateFrame:(GARFrame *)garFrame
+                     error:(NSError *)error {
+  if (error) {
+    self.message =
+        [NSString stringWithFormat:
+                      @"garFrame is returned as a nil in "
+                      @"CloudAnchorManager:sessioin:session:didUPdateFrame: Error description: %@",
+                      [error localizedDescription]];
+    [self updateMessageLabel];
+    return;
+  }
   for (GARAnchor *garAnchor in garFrame.updatedAnchors) {
     if ([garAnchor isEqual:self.garAnchor] && self.resolvedAnchorNode) {
       self.resolvedAnchorNode.simdTransform = garAnchor.transform;
       self.resolvedAnchorNode.hidden = !garAnchor.hasValidTransform;
     }
   }
+}
+
+- (void)cloudAnchorManager:(CloudAnchorManager *)manager
+    resolveCloudAnchorReturnNilWithError:(NSError *)error {
+  self.message = [NSString
+      stringWithFormat:@"Resolved Cloud Anchor returned nil"
+                       @"GARSession:resolveCloudAnchorWithIdentifier Error description: %@",
+                       [error localizedDescription]];
+  [self updateMessageLabel];
+  self.garAnchor = nil;
+  [self enterState:HelloARStateResolvingFinished];
 }
 
 #pragma mark - GARSessionDelegate
@@ -364,6 +391,10 @@ static NSString * const kPrivacyAlertLinkURL =
 
 - (void)enterState:(HelloARState)state {
   switch (state) {
+    case HelloARStateCloudAnchorManagerInitFail:
+      [self toggleButton:self.hostButton enabled:NO title:@"HOST disabled"];
+      [self toggleButton:self.resolveButton enabled:NO title:@"RESOLVE disabled"];
+      break;
     case HelloARStateDefault:
       if (self.arAnchor) {
         [self.sceneView.session removeAnchor:self.arAnchor];

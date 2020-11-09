@@ -19,7 +19,7 @@ import SceneKit
   import ARCore
 
 /// Contains all objects needed to hold a face mesh. Used for multi-buffering.
-fileprivate class FaceMesh {
+private class FaceMesh {
   /// Metal buffer containing vertex positions.
   var mtlVertexBuffer: MTLBuffer?
 
