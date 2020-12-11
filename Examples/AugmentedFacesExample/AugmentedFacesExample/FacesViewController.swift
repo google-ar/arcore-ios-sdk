@@ -25,6 +25,12 @@ import UIKit
 /// Demonstrates how to use ARCore Augmented Faces with SceneKit.
 public final class FacesViewController: UIViewController {
 
+  // MARK: - Member Variables
+  private var needToShowFatalError = false
+  private var alertWindowTitle = "Nothing"
+  private var alertMessage = "Nothing"
+  private var viewDidAppearReached = false
+
   // MARK: - Camera / Scene properties
 
   private var captureDevice: AVCaptureDevice?
@@ -53,22 +59,50 @@ public final class FacesViewController: UIViewController {
   override public func viewDidLoad() {
     super.viewDidLoad()
 
-    setupScene()
-    setupCamera()
-    setupMotion()
+    if !setupScene() {
+      return
+    }
+    if !setupCamera() {
+      return
+    }
+    if !setupMotion() {
+      return
+    }
 
-    faceSession = try! GARAugmentedFaceSession(fieldOfView: videoFieldOfView)
+    do {
+      faceSession = try GARAugmentedFaceSession(fieldOfView: videoFieldOfView)
+    } catch {
+      alertWindowTitle = "A fatal error occurred."
+      alertMessage = "Failed to create session. Error description: \(error)"
+      popupAlertWindowOnError(alertWindowTitle: alertWindowTitle, alertMessage: alertMessage)
+    }
+  }
+
+  override public func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+
+    viewDidAppearReached = true
+
+    if needToShowFatalError {
+      popupAlertWindowOnError(alertWindowTitle: alertWindowTitle, alertMessage: alertMessage)
+    }
   }
 
   /// Create the scene view from a scene and supporting nodes, and add to the view.
   /// The scene is loaded from 'fox_face.scn' which was created from 'canonical_face_mesh.fbx', the
   /// canonical face mesh asset.
   /// https://developers.google.com/ar/develop/developer-guides/creating-assets-for-augmented-faces
-  private func setupScene() {
+  /// - Returns: true when the function has fatal error; false when not.
+  private func setupScene() -> Bool {
     guard let faceImage = UIImage(named: "Face.scnassets/face_texture.png"),
       let scene = SCNScene(named: "Face.scnassets/fox_face.scn"),
       let modelRoot = scene.rootNode.childNode(withName: "asset", recursively: false)
-    else { fatalError("Failed to load face scene!") }
+    else {
+      alertWindowTitle = "A fatal error occurred."
+      alertMessage = "Failed to load face scene!"
+      popupAlertWindowOnError(alertWindowTitle: alertWindowTitle, alertMessage: alertMessage)
+      return false
+    }
 
     // SceneKit uses meters for units, while the canonical face mesh asset uses centimeters.
     modelRoot.simdScale = simd_float3(1, 1, 1) * 0.01
@@ -99,17 +133,30 @@ public final class FacesViewController: UIViewController {
     faceTextureMaterial.shaderModifiers =
       [SCNShaderModifierEntryPoint.fragment: "_output.color.rgb *= _output.color.a;"]
     faceOccluderMaterial.colorBufferWriteMask = []
+
+    return true
   }
 
   /// Setup a camera capture session from the front camera to receive captures.
-  private func setupCamera() {
+  /// - Returns: true when the function has fatal error; false when not.
+  private func setupCamera() -> Bool {
     guard
       let device =
-        AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
+        AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front)
+    else {
+      alertWindowTitle = "A fatal error occurred."
+      alertMessage = "Failed to get device from AVCaptureDevice."
+      popupAlertWindowOnError(alertWindowTitle: alertWindowTitle, alertMessage: alertMessage)
+      return false
+    }
+
+    guard
       let input = try? AVCaptureDeviceInput(device: device)
     else {
-      NSLog("Failed to create capture device from front camera.")
-      return
+      alertWindowTitle = "A fatal error occurred."
+      alertMessage = "Failed to get device input from AVCaptureDeviceInput."
+      popupAlertWindowOnError(alertWindowTitle: alertWindowTitle, alertMessage: alertMessage)
+      return false
     }
 
     let output = AVCaptureVideoDataOutput()
@@ -133,20 +180,31 @@ public final class FacesViewController: UIViewController {
     getVideoPermission(permissionHandler: { granted in
       guard granted else {
         NSLog("Permission not granted to use camera.")
+        self.alertWindowTitle = "Alert"
+        self.alertMessage = "Permission not granted to use camera."
+        self.popupAlertWindowOnError(
+          alertWindowTitle: self.alertWindowTitle, alertMessage: self.alertMessage)
         return
       }
       self.captureSession?.startRunning()
     })
+
+    return true
   }
 
   /// Start receiving motion updates to determine device orientation for use in the face session.
-  private func setupMotion() {
+  /// - Returns: true when the function has fatal error; false when not.
+  private func setupMotion() -> Bool {
     guard motionManager.isDeviceMotionAvailable else {
-      NSLog("Device does not have motion sensors.")
-      return
+      alertWindowTitle = "Alert"
+      alertMessage = "Device does not have motion sensors."
+      popupAlertWindowOnError(alertWindowTitle: alertWindowTitle, alertMessage: alertMessage)
+      return false
     }
     motionManager.deviceMotionUpdateInterval = 0.01
     motionManager.startDeviceMotionUpdates()
+
+    return true
   }
 
   /// Get permission to use device camera.
@@ -172,7 +230,10 @@ public final class FacesViewController: UIViewController {
   ///   - transform: The world transform to apply to the node.
   ///   - regionNode: The region node on which to apply the transform.
   private func updateTransform(_ transform: simd_float4x4, for regionNode: SCNNode?) {
-    guard let node = regionNode else { return }
+    guard let node = regionNode else {
+      NSLog("In updateTransform, node is nil.")
+      return
+    }
 
     let localScale = node.simdScale
     node.simdWorldTransform = transform
@@ -181,6 +242,24 @@ public final class FacesViewController: UIViewController {
     // The .scn asset (and the canonical face mesh asset that it is created from) have their
     // 'forward' (Z+) opposite of SceneKit's forward (Z-), so rotate to orient correctly.
     node.simdLocalRotate(by: simd_quatf(angle: .pi, axis: simd_float3(0, 1, 0)))
+  }
+
+  private func popupAlertWindowOnError(alertWindowTitle: String, alertMessage: String) {
+    if !self.viewDidAppearReached {
+      self.needToShowFatalError = true
+      // Then the process will proceed to viewDidAppear, which will popup an alert window when needToShowFatalError is true.
+      return
+    }
+    // viewDidAppearReached is true, so we can pop up window now.
+    let alertController = UIAlertController(
+      title: alertWindowTitle, message: alertMessage, preferredStyle: .alert)
+    alertController.addAction(
+      UIAlertAction(
+        title: NSLocalizedString("OK", comment: "Default action"), style: .default,
+        handler: { _ in
+          self.needToShowFatalError = false
+        }))
+    self.present(alertController, animated: true, completion: nil)
   }
 
 }
@@ -196,7 +275,10 @@ extension FacesViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
   ) {
     guard let imgBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
       let deviceMotion = motionManager.deviceMotion
-    else { return }
+    else {
+      NSLog("In captureOutput, imgBuffer or deviceMotion is nil.")
+      return
+    }
 
     let frameTime = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
 
@@ -215,7 +297,10 @@ extension FacesViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
 extension FacesViewController: SCNSceneRendererDelegate {
 
   public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-    guard let frame = faceSession?.currentFrame else { return }
+    guard let frame = faceSession?.currentFrame else {
+      NSLog("In renderer, currentFrame is nil.")
+      return
+    }
 
     if let face = frame.face {
       faceTextureNode.geometry = faceMeshConverter.geometryFromFace(face)
