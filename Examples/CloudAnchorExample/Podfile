@@ -1,5 +1,4 @@
 target 'CloudAnchorExample'
 platform :ios, '11.0'
-pod 'ARCore/CloudAnchors', '~> 1.24.0'
-pod 'Firebase/Core', '~> 7.0'
-pod 'Firebase/Database', '~> 7.0'
+pod 'ARCore/CloudAnchors', '~> 1.25.0'
+pod 'Firebase/Database', '~> 8.0'
