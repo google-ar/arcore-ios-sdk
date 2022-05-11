@@ -42,6 +42,10 @@
     self.gSession.delegateQueue = dispatch_get_main_queue();
   }
 
+  GARSessionConfiguration *configuration = [[GARSessionConfiguration alloc] init];
+  configuration.cloudAnchorMode = GARCloudAnchorModeEnabled;
+  [self.gSession setConfiguration:configuration error:nil];
+
   return self;
 }
 

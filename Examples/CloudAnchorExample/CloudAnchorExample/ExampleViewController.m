@@ -46,7 +46,7 @@ static NSString * const kPrivacyAlertContinueButtonText = @"Start now";
 static NSString * const kPrivacyAlertLearnMoreButtonText = @"Learn more";
 static NSString * const kPrivacyAlertBackButtonText = @"Not now";
 static NSString * const kPrivacyAlertLinkURL =
-    @"https://developers.google.com/ar/cloud-anchors-privacy";
+    @"https://developers.google.com/ar/data-privacy";
 
 @interface ExampleViewController () <ARSCNViewDelegate,
                                      CloudAnchorManagerDelegate,

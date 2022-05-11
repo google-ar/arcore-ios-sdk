@@ -49,9 +49,22 @@
     _gSession = [GARSession sessionWithAPIKey:@"your-api-key" bundleIdentifier:nil error:&error];
 
     if (_gSession == nil) {
-      NSString *alertWindowTitle = @"An fatal error occurred. Will disable the UI interaction.";
+      NSString *alertWindowTitle = @"A fatal error occurred. Will disable the UI interaction.";
       NSString *alertMessage =
           [NSString stringWithFormat:@"Failed to create session. Error description: %@",
+                                     [error localizedDescription]];
+      [self popupAlertWindowOnError:alertWindowTitle alertMessage:alertMessage];
+      return nil;
+    }
+
+    GARSessionConfiguration *configuration = [[GARSessionConfiguration alloc] init];
+    configuration.cloudAnchorMode = GARCloudAnchorModeEnabled;
+    [_gSession setConfiguration:configuration error:&error];
+
+    if (error) {
+      NSString *alertWindowTitle = @"A fatal error occurred. Will disable the UI interaction.";
+      NSString *alertMessage =
+          [NSString stringWithFormat:@"Failed to configure session. Error description: %@",
                                      [error localizedDescription]];
       [self popupAlertWindowOnError:alertWindowTitle alertMessage:alertMessage];
       return nil;
