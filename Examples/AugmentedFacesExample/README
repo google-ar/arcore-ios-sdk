@@ -1,6 +1,11 @@
 Setup instructions for AugmentedFacesExample app.
 
-To use:
+To use with CocoaPods:
 1) Run pod install.
 2) Open AugmentedFacesExample.xcworkspace.
+3) Change bundle ID, so that you can sign the app with your team.
+
+To use with Swift Package Manager:
+1) Open AugmentedFacesExample.xcodeproj.
+2) Add a dependency on the 'ARCoreAugmentedFaces' product of the ARCore package.
 3) Change bundle ID, so that you can sign the app with your team.

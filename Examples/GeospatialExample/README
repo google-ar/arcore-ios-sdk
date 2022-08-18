@@ -6,6 +6,10 @@ This sample app shows how to use the ARCore Geospatial API for iOS.
 
 ## Install the SDK
 
+You can install the SDK using either CocoaPods or Swift Package Manager.
+
+### Installing the SDK using CocoaPods.
+
 Run the following command from the directory with Podfile:
 
 ```
@@ -13,6 +17,11 @@ $ pod install
 ```
 
 Open the resulting `.xcworkspace` file (not the project file).
+
+### Installing the SDK using Swift Package Manager.
+
+Open the Xcode project file and add a dependency on the 'ARCoreGeospatial'
+product of the ARCore package.
 
 ## Change the bundle ID
 

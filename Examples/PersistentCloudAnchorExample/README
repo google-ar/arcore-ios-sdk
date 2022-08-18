@@ -2,8 +2,15 @@ Setup instructions for PersistentCloudAnchorExample sample app
 
 To use:
 More details are in: https://developers.google.com/ar/develop/ios/cloud-anchors/quickstart
-1) Enable the ARCore Cloud Anchor API (https://console.cloud.google.com/apis/library/arcorecloudanchor.googleapis.com) for your Google Cloud Platform project.
+1) Enable the ARCore API (https://console.cloud.google.com/apis/library/arcore.googleapis.com) for your Google Cloud Platform project.
 2) Modify CloudAnchorManager.m to use your API key (search for sessionWithAPIKey:).
-3) Run pod install.
-4) Open PersistentCloudAnchorExample.xcworkspace.
-5) Change bundle ID, so that you can sign the app with your team.
+3) Integrate with the ARCore SDK (see below).
+4) Change bundle ID, so that you can sign the app with your team.
+
+To integrate with the ARCore SDK using CocoaPods:
+1) Run pod install.
+2) Open PersistentCloudAnchorExample.xcworkspace.
+
+To integrate with the ARCore SDK using Swift Package Manager:
+1) Open PersistentCloudAnchorExample.xcodeproj.
+2) Add a dependency on the 'ARCoreCloudAnchors' product of the ARCore package.
