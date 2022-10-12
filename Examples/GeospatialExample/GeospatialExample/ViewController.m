@@ -45,40 +45,53 @@ static const NSTimeInterval kDurationNoTerrainAnchorResult = 10;
 // unlimited number.
 static const NSUInteger kMaxAnchors = 5;
 
-static NSString * const kLocalizationTip =
+static NSString *const kPretrackingMessage = @"Localizing your device to set anchor.";
+static NSString *const kLocalizationTip =
     @"Point your camera at buildings, stores, and signs near you.";
-static NSString * const kLocalizationFailureMessage =
+static NSString *const kLocalizationComplete = @"Localization complete.";
+static NSString *const kLocalizationFailureMessage =
     @"Localization not possible.\nClose and open the app to restart.";
-static NSString * const kGeospatialTransformFormat =
+static NSString *const kGeospatialTransformFormat =
     @"LAT/LONG: %.6f°, %.6f°\n    ACCURACY: %.2fm\nALTITUDE: %.2fm\n    ACCURACY: %.2fm\n"
-    "HEADING: %.1f°\n    ACCURACY: %.1f°";
+     "HEADING: %.1f°\n    ACCURACY: %.1f°";
 
 static const CGFloat kFontSize = 14.0;
 
 // Anchor coordinates are persisted between sessions.
-static NSString * const kSavedAnchorsUserDefaultsKey = @"anchors";
+static NSString *const kSavedAnchorsUserDefaultsKey = @"anchors";
 
 // Show privacy notice before using features.
-static NSString * const kPrivacyNoticeUserDefaultsKey = @"privacy_notice_acknowledged";
+static NSString *const kPrivacyNoticeUserDefaultsKey = @"privacy_notice_acknowledged";
 
 // Title of the privacy notice prompt.
-static NSString * const kPrivacyNoticeTitle = @"AR in the real world";
+static NSString *const kPrivacyNoticeTitle = @"AR in the real world";
 
 // Content of the privacy notice prompt.
-static NSString * const kPrivacyNoticeText =
+static NSString *const kPrivacyNoticeText =
     @"To power this session, Google will process visual data from your camera.";
 
 // Link to learn more about the privacy content.
-static NSString * const kPrivacyNoticeLearnMoreURL =
+static NSString *const kPrivacyNoticeLearnMoreURL =
     @"https://developers.google.com/ar/data-privacy";
 
+// Show VPS availability notice before using features.
+static NSString *const kVPSAvailabilityNoticeUserDefaultsKey = @"VPS_availability_notice_acknowledged";
+
+// Title of the VPS availability notice prompt.
+static NSString *const kVPSAvailabilityTitle = @"VPS not available";
+
+// Content of the VPS availability notice prompt.
+static NSString *const kVPSAvailabilityText =
+    @"Your current location does not have VPS coverage. Your session will be using your GPS signal only if VPS is not available.";
+
 typedef NS_ENUM(NSInteger, LocalizationState) {
-  LocalizationStateLocalizing = 0,
-  LocalizationStateLocalized = 1,
+  LocalizationStatePretracking = 0,
+  LocalizationStateLocalizing = 1,
+  LocalizationStateLocalized = 2,
   LocalizationStateFailed = -1,
 };
 
-@interface ViewController ()<ARSessionDelegate, CLLocationManagerDelegate>
+@interface ViewController () <ARSessionDelegate, ARSCNViewDelegate, CLLocationManagerDelegate>
 
 /** Location manager used to request and check for location permissions. */
 @property(nonatomic) CLLocationManager *locationManager;
@@ -91,6 +104,9 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
  */
 @property(nonatomic) GARSession *garSession;
 
+/** A view that shows an AR enabled camera feed and 3D content. */
+@property(nonatomic, weak) ARSCNView *scnView;
+
 /** SceneKit scene used for rendering markers. */
 @property(nonatomic) SCNScene *scene;
 
@@ -100,11 +116,17 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
 /** Label used to show status at bottom of screen. */
 @property(nonatomic, weak) UILabel *statusLabel;
 
+/** Label used to show hint that tap screen to create anchors. */
+@property(nonatomic, weak) UILabel *tapScreenLabel;
+
 /** Button used to place a new geospatial anchor. */
 @property(nonatomic, weak) UIButton *addAnchorButton;
 
-/** Button used to place a new terrain anchor. */
-@property(nonatomic, weak) UIButton *addTerrainAnchorButton;
+/** UISwitch for creating WGS84 anchor or Terrain anchor. */
+@property(nonatomic, weak) UISwitch *terrainAnchorSwitch;
+
+/** Label of terrainAnchorSwitch. */
+@property(nonatomic, weak) UILabel *switchLabel;
 
 /** Button used to clear all existing anchors. */
 @property(nonatomic, weak) UIButton *clearAllAnchorsButton;
@@ -133,6 +155,9 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
 /** Whether the last anchor is terrain anchor. */
 @property(nonatomic) BOOL islastClickedTerrainAnchorButton;
 
+/** Whether it is Terrain anchor mode. */
+@property(nonatomic) BOOL isTerrainAnchorMode;
+
 @end
 
 @implementation ViewController
@@ -145,12 +170,17 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
   self.anchorIDsToRemove = [NSMutableSet set];
 
   ARSCNView *scnView = [[ARSCNView alloc] init];
+  scnView = [[ARSCNView alloc] init];
   scnView.translatesAutoresizingMaskIntoConstraints = NO;
   scnView.automaticallyUpdatesLighting = YES;
   scnView.autoenablesDefaultLighting = YES;
-  self.scene = scnView.scene;
-  self.arSession = scnView.session;
-  [self.view addSubview:scnView];
+  self.scnView = scnView;
+  self.scene = self.scnView.scene;
+  self.arSession = self.scnView.session;
+  self.scnView.delegate = self;
+  self.scnView.debugOptions = ARSCNDebugOptionShowFeaturePoints;
+
+  [self.view addSubview:self.scnView];
 
   UIFont *font = [UIFont systemFontOfSize:kFontSize];
   UIFont *boldFont = [UIFont boldSystemFontOfSize:kFontSize];
@@ -162,7 +192,18 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
   trackingLabel.backgroundColor = [UIColor colorWithWhite:0 alpha:.5];
   trackingLabel.numberOfLines = 6;
   self.trackingLabel = trackingLabel;
-  [scnView addSubview:trackingLabel];
+  [self.scnView addSubview:trackingLabel];
+
+  UILabel *tapScreenLabel = [[UILabel alloc] init];
+  tapScreenLabel.translatesAutoresizingMaskIntoConstraints = NO;
+  tapScreenLabel.font = boldFont;
+  tapScreenLabel.textColor = UIColor.whiteColor;
+  tapScreenLabel.numberOfLines = 2;
+  tapScreenLabel.textAlignment = NSTextAlignmentCenter;
+  tapScreenLabel.text = @"TAP ON SCREEN TO CREATE ANCHOR";
+  tapScreenLabel.hidden = YES;
+  self.tapScreenLabel = tapScreenLabel;
+  [self.scnView addSubview:tapScreenLabel];
 
   UILabel *statusLabel = [[UILabel alloc] init];
   statusLabel.translatesAutoresizingMaskIntoConstraints = NO;
@@ -171,11 +212,11 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
   statusLabel.backgroundColor = [UIColor colorWithWhite:0 alpha:.5];
   statusLabel.numberOfLines = 2;
   self.statusLabel = statusLabel;
-  [scnView addSubview:statusLabel];
+  [self.scnView addSubview:statusLabel];
 
   UIButton *addAnchorButton = [UIButton buttonWithType:UIButtonTypeSystem];
   addAnchorButton.translatesAutoresizingMaskIntoConstraints = NO;
-  [addAnchorButton setTitle:@"ADD ANCHOR" forState:UIControlStateNormal];
+  [addAnchorButton setTitle:@"ADD CAMERA ANCHOR" forState:UIControlStateNormal];
   addAnchorButton.titleLabel.font = boldFont;
   [addAnchorButton addTarget:self
                       action:@selector(addAnchorButtonPressed)
@@ -184,16 +225,19 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
   self.addAnchorButton = addAnchorButton;
   [self.view addSubview:addAnchorButton];
 
-  UIButton *addTerrainAnchorButton = [UIButton buttonWithType:UIButtonTypeSystem];
-  addTerrainAnchorButton.translatesAutoresizingMaskIntoConstraints = NO;
-  [addTerrainAnchorButton setTitle:@"ADD TERRAIN ANCHOR" forState:UIControlStateNormal];
-  addTerrainAnchorButton.titleLabel.font = boldFont;
-  [addTerrainAnchorButton addTarget:self
-                      action:@selector(addTerrainAnchorButtonPressed)
-            forControlEvents:UIControlEventTouchUpInside];
-  addTerrainAnchorButton.hidden = YES;
-  self.addTerrainAnchorButton = addTerrainAnchorButton;
-  [self.view addSubview:addTerrainAnchorButton];
+  UISwitch *terrainAnchorSwitch = [[UISwitch alloc] init];
+  terrainAnchorSwitch.translatesAutoresizingMaskIntoConstraints = NO;
+  [self.view addSubview:terrainAnchorSwitch];
+  self.terrainAnchorSwitch = terrainAnchorSwitch;
+
+  UILabel *switchLabel = [[UILabel alloc] init];
+  switchLabel.translatesAutoresizingMaskIntoConstraints = NO;
+  switchLabel.font = boldFont;
+  switchLabel.textColor = UIColor.whiteColor;
+  switchLabel.numberOfLines = 1;
+  self.switchLabel = switchLabel;
+  [self.scnView addSubview:switchLabel];
+  self.switchLabel.text = @"TERRAIN";
 
   UIButton *clearAllAnchorsButton = [UIButton buttonWithType:UIButtonTypeSystem];
   clearAllAnchorsButton.translatesAutoresizingMaskIntoConstraints = NO;
@@ -206,16 +250,21 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
   self.clearAllAnchorsButton = clearAllAnchorsButton;
   [self.view addSubview:clearAllAnchorsButton];
 
-  [scnView.topAnchor constraintEqualToAnchor:self.view.topAnchor].active = YES;
-  [scnView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor].active = YES;
-  [scnView.leftAnchor constraintEqualToAnchor:self.view.leftAnchor].active = YES;
-  [scnView.rightAnchor constraintEqualToAnchor:self.view.rightAnchor].active = YES;
+  [self.scnView.topAnchor constraintEqualToAnchor:self.view.topAnchor].active = YES;
+  [self.scnView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor].active = YES;
+  [self.scnView.leftAnchor constraintEqualToAnchor:self.view.leftAnchor].active = YES;
+  [self.scnView.rightAnchor constraintEqualToAnchor:self.view.rightAnchor].active = YES;
 
-  [trackingLabel.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor]
-      .active = YES;
+  [trackingLabel.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor].active =
+      YES;
   [trackingLabel.leftAnchor constraintEqualToAnchor:self.view.leftAnchor].active = YES;
   [trackingLabel.rightAnchor constraintEqualToAnchor:self.view.rightAnchor].active = YES;
   [trackingLabel.heightAnchor constraintEqualToConstant:140].active = YES;
+
+  [tapScreenLabel.bottomAnchor constraintEqualToAnchor:self.statusLabel.topAnchor].active = YES;
+  [tapScreenLabel.leftAnchor constraintEqualToAnchor:self.view.leftAnchor].active = YES;
+  [tapScreenLabel.rightAnchor constraintEqualToAnchor:self.view.rightAnchor].active = YES;
+  [tapScreenLabel.heightAnchor constraintEqualToConstant:20].active = YES;
 
   [statusLabel.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor]
       .active = YES;
@@ -223,17 +272,21 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
   [statusLabel.rightAnchor constraintEqualToAnchor:self.view.rightAnchor].active = YES;
   [statusLabel.heightAnchor constraintEqualToConstant:160].active = YES;
 
-  [addTerrainAnchorButton.bottomAnchor
-      constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor]
-      .active = YES;
-  [addTerrainAnchorButton.rightAnchor constraintEqualToAnchor:self.view.rightAnchor].active = YES;
-
-  [addAnchorButton.bottomAnchor constraintEqualToAnchor:self.addTerrainAnchorButton.topAnchor]
+  [addAnchorButton.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor]
       .active = YES;
   [addAnchorButton.rightAnchor constraintEqualToAnchor:self.view.rightAnchor].active = YES;
 
+  [terrainAnchorSwitch.topAnchor constraintEqualToAnchor:self.statusLabel.topAnchor].active = YES;
+  [terrainAnchorSwitch.rightAnchor constraintEqualToAnchor:self.view.rightAnchor].active = YES;
+
+  [switchLabel.topAnchor constraintEqualToAnchor:self.statusLabel.topAnchor].active = YES;
+  [switchLabel.rightAnchor constraintEqualToAnchor:self.terrainAnchorSwitch.leftAnchor].active =
+      YES;
+  [switchLabel.heightAnchor constraintEqualToConstant:40].active = YES;
+
   [clearAllAnchorsButton.bottomAnchor
-      constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor].active = YES;
+      constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor]
+      .active = YES;
   [clearAllAnchorsButton.leftAnchor constraintEqualToAnchor:self.view.leftAnchor].active = YES;
 }
 
@@ -251,21 +304,39 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
       [UIAlertController alertControllerWithTitle:kPrivacyNoticeTitle
                                           message:kPrivacyNoticeText
                                    preferredStyle:UIAlertControllerStyleAlert];
-  UIAlertAction *getStartedAction = [UIAlertAction actionWithTitle:@"Get started"
-                                                             style:UIAlertActionStyleDefault
-                                                           handler:^(UIAlertAction *action) {
-    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kPrivacyNoticeUserDefaultsKey];
-    [self setUpARSession];
-  }];
-  UIAlertAction *learnMoreAction = [UIAlertAction actionWithTitle:@"Learn more"
-                                                            style:UIAlertActionStyleDefault
-                                                          handler:^(UIAlertAction *action) {
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:kPrivacyNoticeLearnMoreURL]
-                                       options:@{}
-                             completionHandler:nil];
-  }];
+  UIAlertAction *getStartedAction = [UIAlertAction
+      actionWithTitle:@"Get started"
+                style:UIAlertActionStyleDefault
+              handler:^(UIAlertAction *action) {
+                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                        forKey:kPrivacyNoticeUserDefaultsKey];
+                [self setUpARSession];
+              }];
+  UIAlertAction *learnMoreAction = [UIAlertAction
+      actionWithTitle:@"Learn more"
+                style:UIAlertActionStyleDefault
+              handler:^(UIAlertAction *action) {
+                [[UIApplication sharedApplication]
+                              openURL:[NSURL URLWithString:kPrivacyNoticeLearnMoreURL]
+                              options:@{}
+                    completionHandler:nil];
+              }];
   [alertController addAction:getStartedAction];
   [alertController addAction:learnMoreAction];
+  [self presentViewController:alertController animated:NO completion:nil];
+}
+
+- (void)showVPSUnavailableNotice {
+  UIAlertController *alertController =
+      [UIAlertController alertControllerWithTitle:kVPSAvailabilityTitle
+                                          message:kVPSAvailabilityText
+                                   preferredStyle:UIAlertControllerStyleAlert];
+  UIAlertAction *continueAction = [UIAlertAction
+      actionWithTitle:@"Continue"
+                style:UIAlertActionStyleDefault
+              handler:^(UIAlertAction *action) {
+              }];
+  [alertController addAction:continueAction];
   [self presentViewController:alertController animated:NO completion:nil];
 }
 
@@ -300,6 +371,8 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
         return;
       }
     }
+    // Request device location for check VPS availability.
+    [self.locationManager requestLocation];
     [self setUpGARSession];
   } else if (authorizationStatus == kCLAuthorizationStatusNotDetermined) {
     // The app is responsible for obtaining the location permission prior to configuring the ARCore
@@ -313,7 +386,7 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
 - (void)setErrorStatus:(NSString *)message {
   self.statusLabel.text = message;
   self.addAnchorButton.hidden = YES;
-  self.addTerrainAnchorButton.hidden = YES;
+  self.tapScreenLabel.hidden = YES;
   self.clearAllAnchorsButton.hidden = YES;
 }
 
@@ -348,8 +421,8 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
                                  bundleIdentifier:nil
                                             error:&error];
   if (error) {
-    [self setErrorStatus:[NSString stringWithFormat:@"Failed to create GARSession: %d",
-                                                    (int)error.code]];
+    [self setErrorStatus:[NSString
+                             stringWithFormat:@"Failed to create GARSession: %d", (int)error.code]];
     return;
   }
 
@@ -369,8 +442,17 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
     return;
   }
 
-  self.localizationState = LocalizationStateLocalizing;
+  self.localizationState = LocalizationStatePretracking;
   self.lastStartLocalizationDate = [NSDate date];
+}
+
+- (void)checkVPSAvailabilityWithCoordinate:(CLLocationCoordinate2D)coordinate {
+  [self.garSession checkVPSAvailabilityAtCoordinate:coordinate
+                                  completionHandler:^(GARVPSAvailability availability) {
+                                    if (availability != GARVPSAvailabilityAvailable) {
+                                      [self showVPSUnavailableNotice];
+                                    }
+                                  }];
 }
 
 - (void)addSavedAnchors {
@@ -380,16 +462,29 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
   for (NSDictionary<NSString *, NSNumber *> *savedAnchor in savedAnchors) {
     CLLocationDegrees latitude = savedAnchor[@"latitude"].doubleValue;
     CLLocationDegrees longitude = savedAnchor[@"longitude"].doubleValue;
-    CLLocationDirection heading = savedAnchor[@"heading"].doubleValue;
+    CLLocationDirection heading;
+    simd_quatf eastUpSouthQTarget = simd_quaternion(0.f, 0.f, 0.f, 1.f);
+    BOOL useHeading = [savedAnchor objectForKey:@"heading"];
+    if (useHeading) {
+      heading = savedAnchor[@"heading"].doubleValue;
+    } else {
+      eastUpSouthQTarget = simd_quaternion(
+          (simd_float4){savedAnchor[@"x"].floatValue, savedAnchor[@"y"].floatValue,
+                        savedAnchor[@"z"].floatValue, savedAnchor[@"w"].floatValue});
+    }
     if ([savedAnchor objectForKey:@"altitude"]) {
       CLLocationDistance altitude = savedAnchor[@"altitude"].doubleValue;
       [self addAnchorWithCoordinate:CLLocationCoordinate2DMake(latitude, longitude)
                            altitude:altitude
                             heading:heading
+                 eastUpSouthQTarget:eastUpSouthQTarget
+                         useHeading:useHeading
                          shouldSave:NO];
     } else {
       [self addTerrainAnchorWithCoordinate:CLLocationCoordinate2DMake(latitude, longitude)
                                    heading:heading
+                        eastUpSouthQTarget:eastUpSouthQTarget
+                                useHeading:useHeading
                                 shouldSave:NO];
     }
   }
@@ -402,26 +497,32 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
 
   if (self.garFrame.earth.earthState != GAREarthStateEnabled) {
     self.localizationState = LocalizationStateFailed;
-  } else if (self.localizationState == LocalizationStateLocalizing) {
-    if (geospatialTransform != nil &&
-        geospatialTransform.horizontalAccuracy <= kHorizontalAccuracyLowThreshold &&
-        geospatialTransform.headingAccuracy <= kHeadingAccuracyLowThreshold) {
-      self.localizationState = LocalizationStateLocalized;
-      if (!self.restoredSavedAnchors) {
-        [self addSavedAnchors];
-        self.restoredSavedAnchors = YES;
-      }
-    } else if ([now timeIntervalSinceDate:self.lastStartLocalizationDate] >=
-               kLocalizationFailureTime) {
-      self.localizationState = LocalizationStateFailed;
-    }
+  } else if (self.garFrame.earth.trackingState != GARTrackingStateTracking) {
+    self.localizationState = LocalizationStatePretracking;
   } else {
-    // Use higher thresholds for exiting 'localized' state to avoid flickering state changes.
-    if (geospatialTransform == nil ||
-        geospatialTransform.horizontalAccuracy > kHorizontalAccuracyHighThreshold ||
-        geospatialTransform.headingAccuracy > kHeadingAccuracyHighThreshold) {
+    if (self.localizationState == LocalizationStatePretracking) {
       self.localizationState = LocalizationStateLocalizing;
-      self.lastStartLocalizationDate = now;
+    } else if (self.localizationState == LocalizationStateLocalizing) {
+      if (geospatialTransform != nil &&
+          geospatialTransform.horizontalAccuracy <= kHorizontalAccuracyLowThreshold &&
+          geospatialTransform.headingAccuracy <= kHeadingAccuracyLowThreshold) {
+        self.localizationState = LocalizationStateLocalized;
+        if (!self.restoredSavedAnchors) {
+          [self addSavedAnchors];
+          self.restoredSavedAnchors = YES;
+        }
+      } else if ([now timeIntervalSinceDate:self.lastStartLocalizationDate] >=
+                 kLocalizationFailureTime) {
+        self.localizationState = LocalizationStateFailed;
+      }
+    } else {
+      // Use higher thresholds for exiting 'localized' state to avoid flickering state changes.
+      if (geospatialTransform == nil ||
+          geospatialTransform.horizontalAccuracy > kHorizontalAccuracyHighThreshold ||
+          geospatialTransform.headingAccuracy > kHeadingAccuracyHighThreshold) {
+        self.localizationState = LocalizationStateLocalizing;
+        self.lastStartLocalizationDate = now;
+      }
     }
   }
 }
@@ -501,11 +602,12 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
 
   // Note: the altitude value here is relative to the WGS84 ellipsoid (equivalent to
   // |CLLocation.ellipsoidalAltitude|).
-  self.trackingLabel.text =
-      [NSString stringWithFormat:kGeospatialTransformFormat,
-          geospatialTransform.coordinate.latitude, geospatialTransform.coordinate.longitude,
-          geospatialTransform.horizontalAccuracy, geospatialTransform.altitude,
-          geospatialTransform.verticalAccuracy, heading, geospatialTransform.headingAccuracy];
+  self.trackingLabel.text = [NSString
+      stringWithFormat:kGeospatialTransformFormat, geospatialTransform.coordinate.latitude,
+                       geospatialTransform.coordinate.longitude,
+                       geospatialTransform.horizontalAccuracy, geospatialTransform.altitude,
+                       geospatialTransform.verticalAccuracy, heading,
+                       geospatialTransform.headingAccuracy];
 }
 
 - (void)updateStatusLabelAndButtons {
@@ -540,28 +642,34 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
       }
       if (message != nil) {
         self.statusLabel.text = message;
-      } else if (!self.islastClickedTerrainAnchorButton){
+      } else if (self.garFrame.anchors.count == 0) {
+        self.statusLabel.text = kLocalizationComplete;
+      } else if (!self.islastClickedTerrainAnchorButton) {
         self.statusLabel.text =
             [NSString stringWithFormat:@"Num anchors: %d", (int)self.garFrame.anchors.count];
       }
       self.clearAllAnchorsButton.hidden = (self.garFrame.anchors.count == 0);
       self.addAnchorButton.hidden = (self.garFrame.anchors.count >= kMaxAnchors);
-      self.addTerrainAnchorButton.hidden = (self.garFrame.anchors.count >= kMaxAnchors);
+      self.tapScreenLabel.hidden = (self.garFrame.anchors.count >= kMaxAnchors);
       break;
     }
+    case LocalizationStatePretracking:
+      self.statusLabel.text = kPretrackingMessage;
+      break;
     case LocalizationStateLocalizing:
       self.statusLabel.text = kLocalizationTip;
       self.addAnchorButton.hidden = YES;
-      self.addTerrainAnchorButton.hidden = YES;
+      self.tapScreenLabel.hidden = YES;
       self.clearAllAnchorsButton.hidden = YES;
       break;
     case LocalizationStateFailed:
       self.statusLabel.text = kLocalizationFailureMessage;
       self.addAnchorButton.hidden = YES;
-      self.addTerrainAnchorButton.hidden = YES;
+      self.tapScreenLabel.hidden = YES;
       self.clearAllAnchorsButton.hidden = YES;
       break;
   }
+  self.isTerrainAnchorMode = self.terrainAnchorSwitch.isOn;
 }
 
 - (NSString *)terrainStateString:(GARTerrainAnchorState)terrainAnchorState {
@@ -594,12 +702,18 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
 - (void)addAnchorWithCoordinate:(CLLocationCoordinate2D)coordinate
                        altitude:(CLLocationDistance)altitude
                         heading:(CLLocationDirection)heading
+             eastUpSouthQTarget:(simd_quatf)eastUpSouthQTarget
+                     useHeading:(BOOL)useHeading
                      shouldSave:(BOOL)shouldSave {
-  // The arrow of the 3D model points towards the Z-axis, while heading is measured clockwise from
-  // North.
-  float angle = (M_PI / 180) * (180 - heading);
-  simd_quatf eastUpSouthQAnchor = simd_quaternion(angle, simd_make_float3(0, 1, 0));
-
+  simd_quatf eastUpSouthQAnchor;
+  if (useHeading) {
+    // The arrow of the 3D model points towards the Z-axis, while heading is measured clockwise from
+    // North.
+    float angle = (M_PI / 180) * (180 - heading);
+    eastUpSouthQAnchor = simd_quaternion(angle, simd_make_float3(0, 1, 0));
+  } else {
+    eastUpSouthQAnchor = eastUpSouthQTarget;
+  }
   // The return value of |createAnchorWithCoordinate:altitude:eastUpSouthQAnchor:error:| is just the
   // first snapshot of the anchor (which is immutable). Use the updated snapshots in
   // |GARFrame.anchors| to get updated values on a frame-by-frame basis.
@@ -619,23 +733,42 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
         [defaults arrayForKey:kSavedAnchorsUserDefaultsKey] ?: @[];
     NSMutableArray<NSDictionary<NSString *, NSNumber *> *> *newSavedAnchors =
         [savedAnchors mutableCopy];
-    [newSavedAnchors addObject:@{
-      @"latitude": @(coordinate.latitude),
-      @"longitude": @(coordinate.longitude),
-      @"altitude": @(altitude),
-      @"heading": @(heading),
-    }];
+    if (useHeading) {
+      [newSavedAnchors addObject:@{
+        @"latitude" : @(coordinate.latitude),
+        @"longitude" : @(coordinate.longitude),
+        @"altitude" : @(altitude),
+        @"heading" : @(heading),
+      }];
+    } else {
+      [newSavedAnchors addObject:@{
+        @"latitude" : @(coordinate.latitude),
+        @"longitude" : @(coordinate.longitude),
+        @"altitude" : @(altitude),
+        @"x" : @(eastUpSouthQTarget.vector[0]),
+        @"y" : @(eastUpSouthQTarget.vector[1]),
+        @"z" : @(eastUpSouthQTarget.vector[2]),
+        @"w" : @(eastUpSouthQTarget.vector[3]),
+      }];
+    }
     [defaults setObject:newSavedAnchors forKey:kSavedAnchorsUserDefaultsKey];
   }
 }
 
 - (void)addTerrainAnchorWithCoordinate:(CLLocationCoordinate2D)coordinate
                                heading:(CLLocationDirection)heading
+                    eastUpSouthQTarget:(simd_quatf)eastUpSouthQTarget
+                            useHeading:(BOOL)useHeading
                             shouldSave:(BOOL)shouldSave {
-  // The arrow of the 3D model points towards the Z-axis, while heading is measured clockwise from
-  // North.
-  float angle = (M_PI / 180) * (180 - heading);
-  simd_quatf eastUpSouthQAnchor = simd_quaternion(angle, simd_make_float3(0, 1, 0));
+  simd_quatf eastUpSouthQAnchor;
+  if (useHeading) {
+    // The arrow of the 3D model points towards the Z-axis, while heading is measured clockwise from
+    // North.
+    float angle = (M_PI / 180) * (180 - heading);
+    eastUpSouthQAnchor = simd_quaternion(angle, simd_make_float3(0, 1, 0));
+  } else {
+    eastUpSouthQAnchor = eastUpSouthQTarget;
+  }
 
   // The return value of |createAnchorWithCoordinate:altitude:eastUpSouthQAnchor:error:| is just the
   // first snapshot of the anchor (which is immutable). Use the updated snapshots in
@@ -660,11 +793,22 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
         [defaults arrayForKey:kSavedAnchorsUserDefaultsKey] ?: @[];
     NSMutableArray<NSDictionary<NSString *, NSNumber *> *> *newSavedAnchors =
         [savedAnchors mutableCopy];
-    [newSavedAnchors addObject:@{
-      @"latitude" : @(coordinate.latitude),
-      @"longitude" : @(coordinate.longitude),
-      @"heading" : @(heading),
-    }];
+    if (useHeading) {
+      [newSavedAnchors addObject:@{
+        @"latitude" : @(coordinate.latitude),
+        @"longitude" : @(coordinate.longitude),
+        @"heading" : @(heading),
+      }];
+    } else {
+      [newSavedAnchors addObject:@{
+        @"latitude" : @(coordinate.latitude),
+        @"longitude" : @(coordinate.longitude),
+        @"x" : @(eastUpSouthQTarget.vector[0]),
+        @"y" : @(eastUpSouthQTarget.vector[1]),
+        @"z" : @(eastUpSouthQTarget.vector[2]),
+        @"w" : @(eastUpSouthQTarget.vector[3]),
+      }];
+    }
     [defaults setObject:newSavedAnchors forKey:kSavedAnchorsUserDefaultsKey];
   }
 }
@@ -672,20 +816,21 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
 - (void)addAnchorButtonPressed {
   // This button will be hidden if not currently tracking, so this can't be nil.
   GARGeospatialTransform *geospatialTransform = self.garFrame.earth.cameraGeospatialTransform;
-  [self addAnchorWithCoordinate:geospatialTransform.coordinate
-                       altitude:geospatialTransform.altitude
-                        heading:geospatialTransform.heading
-                     shouldSave:YES];
-  self.islastClickedTerrainAnchorButton = NO;
-}
-
-- (void)addTerrainAnchorButtonPressed {
-  // This button will be hidden if not currently tracking, so this can't be nil.
-  GARGeospatialTransform *geospatialTransform = self.garFrame.earth.cameraGeospatialTransform;
-  [self addTerrainAnchorWithCoordinate:geospatialTransform.coordinate
-                               heading:geospatialTransform.heading
-                            shouldSave:YES];
-  self.islastClickedTerrainAnchorButton = YES;
+  if (self.isTerrainAnchorMode) {
+    [self addTerrainAnchorWithCoordinate:geospatialTransform.coordinate
+                                 heading:geospatialTransform.heading
+                      eastUpSouthQTarget:simd_quaternion(0.f, 0.f, 0.f, 1.f)
+                              useHeading:YES
+                              shouldSave:YES];
+  } else {
+    [self addAnchorWithCoordinate:geospatialTransform.coordinate
+                         altitude:geospatialTransform.altitude
+                          heading:geospatialTransform.heading
+               eastUpSouthQTarget:simd_quaternion(0.f, 0.f, 0.f, 1.f)
+                       useHeading:YES
+                       shouldSave:YES];
+  }
+  self.islastClickedTerrainAnchorButton = self.isTerrainAnchorMode;
 }
 
 - (void)clearAllAnchorsButtonPressed {
@@ -698,6 +843,49 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
   [self.markerNodes removeAllObjects];
   [[NSUserDefaults standardUserDefaults] removeObjectForKey:kSavedAnchorsUserDefaultsKey];
   self.islastClickedTerrainAnchorButton = NO;
+}
+
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+  if (touches.count < 1) {
+    return;
+  }
+  if (self.garFrame.anchors.count >= kMaxAnchors) {
+    return;
+  }
+
+  UITouch *touch = [[touches allObjects] firstObject];
+  CGPoint touchLocation = [touch locationInView:self.scnView];
+  NSArray<ARRaycastResult *> *rayCastResults = [self.arSession
+      raycast:[self.scnView raycastQueryFromPoint:touchLocation
+                                   allowingTarget:ARRaycastTargetExistingPlaneGeometry
+                                        alignment:ARRaycastTargetAlignmentHorizontal]];
+
+  if (rayCastResults.count > 0) {
+    ARRaycastResult *result = rayCastResults.firstObject;
+    NSError *error = nil;
+    GARGeospatialTransform *geospatialTransform =
+        [self.garSession geospatialTransformFromTransform:result.worldTransform error:&error];
+    if (error) {
+      NSLog(@"Error adding convert transform to GARGeospatialTransform: %@", error);
+      return;
+    }
+
+    if (self.isTerrainAnchorMode) {
+      [self addTerrainAnchorWithCoordinate:geospatialTransform.coordinate
+                                   heading:0
+                        eastUpSouthQTarget:geospatialTransform.eastUpSouthQTarget
+                                useHeading:NO
+                                shouldSave:YES];
+    } else {
+      [self addAnchorWithCoordinate:geospatialTransform.coordinate
+                           altitude:geospatialTransform.altitude
+                            heading:0
+                 eastUpSouthQTarget:geospatialTransform.eastUpSouthQTarget
+                         useHeading:NO
+                         shouldSave:YES];
+    }
+    self.islastClickedTerrainAnchorButton = self.isTerrainAnchorMode;
+  }
 }
 
 #pragma mark - CLLocationManagerDelegate
@@ -714,9 +902,86 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
   [self checkLocationPermission];
 }
 
+- (void)locationManager:(CLLocationManager *)locationManager
+     didUpdateLocations:(NSArray<CLLocation *> *)locations {
+  CLLocation *location = locations.lastObject;
+  if (location) {
+    [self checkVPSAvailabilityWithCoordinate:location.coordinate];
+  }
+}
+
+- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
+   NSLog(@"Error get location: %@", error);
+}
+
+#pragma mark - ARSCNViewDelegate
+- (nullable SCNNode *)renderer:(id<SCNSceneRenderer>)renderer nodeForAnchor:(ARAnchor *)anchor {
+  return [[SCNNode alloc] init];
+}
+
+- (void)renderer:(id<SCNSceneRenderer>)renderer
+      didAddNode:(SCNNode *)node
+       forAnchor:(ARAnchor *)anchor {
+  if ([anchor isKindOfClass:[ARPlaneAnchor class]]) {
+    ARPlaneAnchor *planeAnchor = (ARPlaneAnchor *)anchor;
+
+    CGFloat width = planeAnchor.extent.x;
+    CGFloat height = planeAnchor.extent.z;
+    SCNPlane *plane = [SCNPlane planeWithWidth:width height:height];
+
+    plane.materials.firstObject.diffuse.contents = [UIColor colorWithRed:0.0f
+                                                                   green:0.0f
+                                                                    blue:1.0f
+                                                                   alpha:0.7f];
+
+    SCNNode *planeNode = [SCNNode nodeWithGeometry:plane];
+
+    CGFloat x = planeAnchor.center.x;
+    CGFloat y = planeAnchor.center.y;
+    CGFloat z = planeAnchor.center.z;
+    planeNode.position = SCNVector3Make(x, y, z);
+    planeNode.eulerAngles = SCNVector3Make(-M_PI / 2, 0, 0);
+
+    [node addChildNode:planeNode];
+  }
+}
+
+- (void)renderer:(id<SCNSceneRenderer>)renderer
+   didUpdateNode:(SCNNode *)node
+       forAnchor:(ARAnchor *)anchor {
+  if ([anchor isKindOfClass:[ARPlaneAnchor class]]) {
+    ARPlaneAnchor *planeAnchor = (ARPlaneAnchor *)anchor;
+
+    SCNNode *planeNode = node.childNodes.firstObject;
+    NSAssert([planeNode.geometry isKindOfClass:[SCNPlane class]],
+             @"planeNode's child is not an SCNPlane--did something go wrong in "
+             @"renderer:didAddNode:forAnchor:?");
+    SCNPlane *plane = (SCNPlane *)planeNode.geometry;
+
+    CGFloat width = planeAnchor.extent.x;
+    CGFloat height = planeAnchor.extent.z;
+    plane.width = width;
+    plane.height = height;
+
+    CGFloat x = planeAnchor.center.x;
+    CGFloat y = planeAnchor.center.y;
+    CGFloat z = planeAnchor.center.z;
+    planeNode.position = SCNVector3Make(x, y, z);
+  }
+}
+
+- (void)renderer:(id<SCNSceneRenderer>)renderer
+   didRemoveNode:(SCNNode *)node
+       forAnchor:(ARAnchor *)anchor {
+  if ([anchor isKindOfClass:[ARPlaneAnchor class]]) {
+    SCNNode *planeNode = node.childNodes.firstObject;
+    [planeNode removeFromParentNode];
+  }
+}
+
 #pragma mark - ARSessionDelegate
 
--(void)session:(ARSession *)session didUpdateFrame:(ARFrame *)frame {
+- (void)session:(ARSession *)session didUpdateFrame:(ARFrame *)frame {
   if (self.garSession == nil || self.localizationState == LocalizationStateFailed) {
     return;
   }

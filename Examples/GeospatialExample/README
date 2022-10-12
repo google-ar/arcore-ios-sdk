@@ -32,7 +32,7 @@ Change the app's bundle ID so you can sign the app with your development team.
 Before you can start using the Geospatial API, you will need to register an
 API key in the
 [Google Developer Console](https://console.developers.google.com/) for your
-cloud project and enable the [ARCore API](https://console.cloud.google.com/apis/library/arcore.googleapis.com).
+cloud project and enable the [ARCore API](https://console.cloud.google.com/apis/library/arcore).
 Make sure your API key is either unrestricted by app, or allows your specific
 bundle ID.
 
