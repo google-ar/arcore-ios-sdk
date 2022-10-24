@@ -32,6 +32,9 @@ data when you use our partners' sites or apps", (located at
 www.google.com/policies/privacy/partners/, or any other URL Google may provide
 from time to time).
 
+Review all [User privacy requirements](https://developers.google.com/ar/develop/privacy-requirements#cloud-anchors-privacy-requirements)
+in the [ARCore documentation](https://developers.google.com/ar/develop).
+
 ## Deprecation policy
 
 Apps built with **ARCore SDK 1.12.0 or higher** are covered by the
