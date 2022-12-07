@@ -33,8 +33,8 @@
 // and 'high' values here to avoid flickering state changes.
 static const CLLocationAccuracy kHorizontalAccuracyLowThreshold = 10;
 static const CLLocationAccuracy kHorizontalAccuracyHighThreshold = 20;
-static const CLLocationDirectionAccuracy kHeadingAccuracyLowThreshold = 15;
-static const CLLocationDirectionAccuracy kHeadingAccuracyHighThreshold = 25;
+static const CLLocationDirectionAccuracy kOrientationYawAccuracyLowThreshold = 15;
+static const CLLocationDirectionAccuracy kOrientationYawAccuracyHighThreshold = 25;
 
 // Time after which the app gives up if good enough accuracy is not achieved.
 static const NSTimeInterval kLocalizationFailureTime = 3 * 60.0;
@@ -53,7 +53,7 @@ static NSString *const kLocalizationFailureMessage =
     @"Localization not possible.\nClose and open the app to restart.";
 static NSString *const kGeospatialTransformFormat =
     @"LAT/LONG: %.6f°, %.6f°\n    ACCURACY: %.2fm\nALTITUDE: %.2fm\n    ACCURACY: %.2fm\n"
-     "HEADING: %.1f°\n    ACCURACY: %.1f°";
+     "ORIENTATION: [%.1f, %.1f, %.1f, %.1f]\n    YAW ACCURACY: %.1f°";
 
 static const CGFloat kFontSize = 14.0;
 
@@ -331,11 +331,10 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
       [UIAlertController alertControllerWithTitle:kVPSAvailabilityTitle
                                           message:kVPSAvailabilityText
                                    preferredStyle:UIAlertControllerStyleAlert];
-  UIAlertAction *continueAction = [UIAlertAction
-      actionWithTitle:@"Continue"
-                style:UIAlertActionStyleDefault
-              handler:^(UIAlertAction *action) {
-              }];
+  UIAlertAction *continueAction = [UIAlertAction actionWithTitle:@"Continue"
+                                                           style:UIAlertActionStyleDefault
+                                                         handler:^(UIAlertAction *action){
+                                                         }];
   [alertController addAction:continueAction];
   [self presentViewController:alertController animated:NO completion:nil];
 }
@@ -460,31 +459,24 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
   NSArray<NSDictionary<NSString *, NSNumber *> *> *savedAnchors =
       [defaults arrayForKey:kSavedAnchorsUserDefaultsKey];
   for (NSDictionary<NSString *, NSNumber *> *savedAnchor in savedAnchors) {
+    // Ignore the stored anchors that contain heading for backwards-compatibility.
+    if ([savedAnchor objectForKey:@"heading"]) {
+      continue;
+    }
     CLLocationDegrees latitude = savedAnchor[@"latitude"].doubleValue;
     CLLocationDegrees longitude = savedAnchor[@"longitude"].doubleValue;
-    CLLocationDirection heading;
-    simd_quatf eastUpSouthQTarget = simd_quaternion(0.f, 0.f, 0.f, 1.f);
-    BOOL useHeading = [savedAnchor objectForKey:@"heading"];
-    if (useHeading) {
-      heading = savedAnchor[@"heading"].doubleValue;
-    } else {
-      eastUpSouthQTarget = simd_quaternion(
-          (simd_float4){savedAnchor[@"x"].floatValue, savedAnchor[@"y"].floatValue,
-                        savedAnchor[@"z"].floatValue, savedAnchor[@"w"].floatValue});
-    }
+    simd_quatf eastUpSouthQTarget =
+        simd_quaternion((simd_float4){savedAnchor[@"x"].floatValue, savedAnchor[@"y"].floatValue,
+                                      savedAnchor[@"z"].floatValue, savedAnchor[@"w"].floatValue});
     if ([savedAnchor objectForKey:@"altitude"]) {
       CLLocationDistance altitude = savedAnchor[@"altitude"].doubleValue;
       [self addAnchorWithCoordinate:CLLocationCoordinate2DMake(latitude, longitude)
                            altitude:altitude
-                            heading:heading
                  eastUpSouthQTarget:eastUpSouthQTarget
-                         useHeading:useHeading
                          shouldSave:NO];
     } else {
       [self addTerrainAnchorWithCoordinate:CLLocationCoordinate2DMake(latitude, longitude)
-                                   heading:heading
                         eastUpSouthQTarget:eastUpSouthQTarget
-                                useHeading:useHeading
                                 shouldSave:NO];
     }
   }
@@ -505,7 +497,7 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
     } else if (self.localizationState == LocalizationStateLocalizing) {
       if (geospatialTransform != nil &&
           geospatialTransform.horizontalAccuracy <= kHorizontalAccuracyLowThreshold &&
-          geospatialTransform.headingAccuracy <= kHeadingAccuracyLowThreshold) {
+          geospatialTransform.orientationYawAccuracy <= kOrientationYawAccuracyLowThreshold) {
         self.localizationState = LocalizationStateLocalized;
         if (!self.restoredSavedAnchors) {
           [self addSavedAnchors];
@@ -519,7 +511,7 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
       // Use higher thresholds for exiting 'localized' state to avoid flickering state changes.
       if (geospatialTransform == nil ||
           geospatialTransform.horizontalAccuracy > kHorizontalAccuracyHighThreshold ||
-          geospatialTransform.headingAccuracy > kHeadingAccuracyHighThreshold) {
+          geospatialTransform.orientationYawAccuracy > kOrientationYawAccuracyHighThreshold) {
         self.localizationState = LocalizationStateLocalizing;
         self.lastStartLocalizationDate = now;
       }
@@ -536,8 +528,9 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
       continue;
     }
     SCNNode *node = self.markerNodes[anchor.identifier];
+
     if (!node) {
-      // Only render resolved Terrain Anchors and Geospatial anchors.
+      // Only render resolved Terrain anchors and Geospatial anchors.
       if (anchor.terrainState == GARTerrainAnchorStateSuccess) {
         node = [self markerNodeIsTerrainAnchor:YES];
       } else if (anchor.terrainState == GARTerrainAnchorStateNone) {
@@ -546,7 +539,10 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
       self.markerNodes[anchor.identifier] = node;
       [self.scene.rootNode addChildNode:node];
     }
-    node.simdTransform = anchor.transform;
+    // Rotate the virtual object 180 degrees around the Y axis to make the object face the GL
+    // camera -Z axis, since camera Z axis faces toward users.
+    simd_quatf rotationYquat = simd_quaternion(M_PI, (simd_float3){0, 1, 0});
+    node.simdTransform =  matrix_multiply(anchor.transform, simd_matrix4x4(rotationYquat));
     node.hidden = (self.localizationState != LocalizationStateLocalized);
     [currentAnchorIDs addObject:anchor.identifier];
   }
@@ -593,12 +589,7 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
   // This can't be nil if currently tracking and in a good EarthState.
   GARGeospatialTransform *geospatialTransform = self.garFrame.earth.cameraGeospatialTransform;
 
-  // Display heading in range [-180, 180], with 0=North, instead of [0, 360), as required by the
-  // type CLLocationDirection.
-  double heading = geospatialTransform.heading;
-  if (heading > 180) {
-    heading -= 360;
-  }
+  simd_quatf cameraQuaternion = geospatialTransform.eastUpSouthQTarget;
 
   // Note: the altitude value here is relative to the WGS84 ellipsoid (equivalent to
   // |CLLocation.ellipsoidalAltitude|).
@@ -606,8 +597,9 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
       stringWithFormat:kGeospatialTransformFormat, geospatialTransform.coordinate.latitude,
                        geospatialTransform.coordinate.longitude,
                        geospatialTransform.horizontalAccuracy, geospatialTransform.altitude,
-                       geospatialTransform.verticalAccuracy, heading,
-                       geospatialTransform.headingAccuracy];
+                       geospatialTransform.verticalAccuracy, cameraQuaternion.vector[0],
+                       cameraQuaternion.vector[1], cameraQuaternion.vector[2],
+                       cameraQuaternion.vector[3], geospatialTransform.orientationYawAccuracy];
 }
 
 - (void)updateStatusLabelAndButtons {
@@ -623,7 +615,7 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
         }
 
         if (self.terrainAnchorIDToStartTime[anchor.identifier] != nil) {
-          message = [NSString stringWithFormat:@"Terrain Anchor State: %@",
+          message = [NSString stringWithFormat:@"Terrain anchor state: %@",
                                                [self terrainStateString:anchor.terrainState]];
 
           NSDate *now = [NSDate date];
@@ -701,26 +693,15 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
 
 - (void)addAnchorWithCoordinate:(CLLocationCoordinate2D)coordinate
                        altitude:(CLLocationDistance)altitude
-                        heading:(CLLocationDirection)heading
              eastUpSouthQTarget:(simd_quatf)eastUpSouthQTarget
-                     useHeading:(BOOL)useHeading
                      shouldSave:(BOOL)shouldSave {
-  simd_quatf eastUpSouthQAnchor;
-  if (useHeading) {
-    // The arrow of the 3D model points towards the Z-axis, while heading is measured clockwise from
-    // North.
-    float angle = (M_PI / 180) * (180 - heading);
-    eastUpSouthQAnchor = simd_quaternion(angle, simd_make_float3(0, 1, 0));
-  } else {
-    eastUpSouthQAnchor = eastUpSouthQTarget;
-  }
   // The return value of |createAnchorWithCoordinate:altitude:eastUpSouthQAnchor:error:| is just the
   // first snapshot of the anchor (which is immutable). Use the updated snapshots in
   // |GARFrame.anchors| to get updated values on a frame-by-frame basis.
   NSError *error = nil;
   [self.garSession createAnchorWithCoordinate:coordinate
                                      altitude:altitude
-                           eastUpSouthQAnchor:eastUpSouthQAnchor
+                           eastUpSouthQAnchor:eastUpSouthQTarget
                                         error:&error];
   if (error) {
     NSLog(@"Error adding anchor: %@", error);
@@ -733,50 +714,30 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
         [defaults arrayForKey:kSavedAnchorsUserDefaultsKey] ?: @[];
     NSMutableArray<NSDictionary<NSString *, NSNumber *> *> *newSavedAnchors =
         [savedAnchors mutableCopy];
-    if (useHeading) {
-      [newSavedAnchors addObject:@{
-        @"latitude" : @(coordinate.latitude),
-        @"longitude" : @(coordinate.longitude),
-        @"altitude" : @(altitude),
-        @"heading" : @(heading),
-      }];
-    } else {
-      [newSavedAnchors addObject:@{
-        @"latitude" : @(coordinate.latitude),
-        @"longitude" : @(coordinate.longitude),
-        @"altitude" : @(altitude),
-        @"x" : @(eastUpSouthQTarget.vector[0]),
-        @"y" : @(eastUpSouthQTarget.vector[1]),
-        @"z" : @(eastUpSouthQTarget.vector[2]),
-        @"w" : @(eastUpSouthQTarget.vector[3]),
-      }];
-    }
+
+    [newSavedAnchors addObject:@{
+      @"latitude" : @(coordinate.latitude),
+      @"longitude" : @(coordinate.longitude),
+      @"altitude" : @(altitude),
+      @"x" : @(eastUpSouthQTarget.vector[0]),
+      @"y" : @(eastUpSouthQTarget.vector[1]),
+      @"z" : @(eastUpSouthQTarget.vector[2]),
+      @"w" : @(eastUpSouthQTarget.vector[3]),
+    }];
     [defaults setObject:newSavedAnchors forKey:kSavedAnchorsUserDefaultsKey];
   }
 }
 
 - (void)addTerrainAnchorWithCoordinate:(CLLocationCoordinate2D)coordinate
-                               heading:(CLLocationDirection)heading
                     eastUpSouthQTarget:(simd_quatf)eastUpSouthQTarget
-                            useHeading:(BOOL)useHeading
                             shouldSave:(BOOL)shouldSave {
-  simd_quatf eastUpSouthQAnchor;
-  if (useHeading) {
-    // The arrow of the 3D model points towards the Z-axis, while heading is measured clockwise from
-    // North.
-    float angle = (M_PI / 180) * (180 - heading);
-    eastUpSouthQAnchor = simd_quaternion(angle, simd_make_float3(0, 1, 0));
-  } else {
-    eastUpSouthQAnchor = eastUpSouthQTarget;
-  }
-
   // The return value of |createAnchorWithCoordinate:altitude:eastUpSouthQAnchor:error:| is just the
   // first snapshot of the anchor (which is immutable). Use the updated snapshots in
   // |GARFrame.anchors| to get updated values on a frame-by-frame basis.
   NSError *error = nil;
   GARAnchor *anchor = [self.garSession createAnchorWithCoordinate:coordinate
                                              altitudeAboveTerrain:0
-                                               eastUpSouthQAnchor:eastUpSouthQAnchor
+                                               eastUpSouthQAnchor:eastUpSouthQTarget
                                                             error:&error];
   if (error) {
     NSLog(@"Error adding anchor: %@", error);
@@ -793,22 +754,14 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
         [defaults arrayForKey:kSavedAnchorsUserDefaultsKey] ?: @[];
     NSMutableArray<NSDictionary<NSString *, NSNumber *> *> *newSavedAnchors =
         [savedAnchors mutableCopy];
-    if (useHeading) {
-      [newSavedAnchors addObject:@{
-        @"latitude" : @(coordinate.latitude),
-        @"longitude" : @(coordinate.longitude),
-        @"heading" : @(heading),
-      }];
-    } else {
-      [newSavedAnchors addObject:@{
-        @"latitude" : @(coordinate.latitude),
-        @"longitude" : @(coordinate.longitude),
-        @"x" : @(eastUpSouthQTarget.vector[0]),
-        @"y" : @(eastUpSouthQTarget.vector[1]),
-        @"z" : @(eastUpSouthQTarget.vector[2]),
-        @"w" : @(eastUpSouthQTarget.vector[3]),
-      }];
-    }
+    [newSavedAnchors addObject:@{
+      @"latitude" : @(coordinate.latitude),
+      @"longitude" : @(coordinate.longitude),
+      @"x" : @(eastUpSouthQTarget.vector[0]),
+      @"y" : @(eastUpSouthQTarget.vector[1]),
+      @"z" : @(eastUpSouthQTarget.vector[2]),
+      @"w" : @(eastUpSouthQTarget.vector[3]),
+    }];
     [defaults setObject:newSavedAnchors forKey:kSavedAnchorsUserDefaultsKey];
   }
 }
@@ -816,18 +769,19 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
 - (void)addAnchorButtonPressed {
   // This button will be hidden if not currently tracking, so this can't be nil.
   GARGeospatialTransform *geospatialTransform = self.garFrame.earth.cameraGeospatialTransform;
+  // Update the quaternion from landscape orientation to portrait orientation.
+  simd_quatf rotationZquat = simd_quaternion(M_PI / 2, (simd_float3){0, 0, 1});
+  simd_quatf eastUpSouthQPortraitCamera =
+      simd_mul(geospatialTransform.eastUpSouthQTarget, rotationZquat);
+
   if (self.isTerrainAnchorMode) {
     [self addTerrainAnchorWithCoordinate:geospatialTransform.coordinate
-                                 heading:geospatialTransform.heading
-                      eastUpSouthQTarget:simd_quaternion(0.f, 0.f, 0.f, 1.f)
-                              useHeading:YES
+                      eastUpSouthQTarget:eastUpSouthQPortraitCamera
                               shouldSave:YES];
   } else {
     [self addAnchorWithCoordinate:geospatialTransform.coordinate
                          altitude:geospatialTransform.altitude
-                          heading:geospatialTransform.heading
-               eastUpSouthQTarget:simd_quaternion(0.f, 0.f, 0.f, 1.f)
-                       useHeading:YES
+               eastUpSouthQTarget:eastUpSouthQPortraitCamera
                        shouldSave:YES];
   }
   self.islastClickedTerrainAnchorButton = self.isTerrainAnchorMode;
@@ -872,16 +826,12 @@ typedef NS_ENUM(NSInteger, LocalizationState) {
 
     if (self.isTerrainAnchorMode) {
       [self addTerrainAnchorWithCoordinate:geospatialTransform.coordinate
-                                   heading:0
                         eastUpSouthQTarget:geospatialTransform.eastUpSouthQTarget
-                                useHeading:NO
                                 shouldSave:YES];
     } else {
       [self addAnchorWithCoordinate:geospatialTransform.coordinate
                            altitude:geospatialTransform.altitude
-                            heading:0
                  eastUpSouthQTarget:geospatialTransform.eastUpSouthQTarget
-                         useHeading:NO
                          shouldSave:YES];
     }
     self.islastClickedTerrainAnchorButton = self.isTerrainAnchorMode;

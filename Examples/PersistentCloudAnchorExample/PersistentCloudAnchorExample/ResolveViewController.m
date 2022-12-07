@@ -84,7 +84,8 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
     case ResolveStateResolving: {
       self.message = @"Resolving...";
       self.debugMessage = @"To cancel the resolve, call removeAnchor";
-      __weak ResolveViewController *weakSelf = self;
+      // TODO(b/251453188): Fix unused variable
+      __weak ResolveViewController *__unused weakSelf = self;
 
     } break;
     case ResolveStateFinished:

@@ -85,7 +85,8 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
       simd_float4x4 anchorTCamera =
           simd_mul(simd_inverse(result.worldTransform), self.cameraTransform);
       float x = anchorTCamera.columns[3][0];
-      float y = anchorTCamera.columns[3][1];
+      // TODO(b/251453188): Fix unused variable
+      float __unused y = anchorTCamera.columns[3][1];
       float z = anchorTCamera.columns[3][2];
       // Angle from the z axis, measured counterclockwise.
       float angle = atan2f(x, z);

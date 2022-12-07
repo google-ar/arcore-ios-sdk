@@ -24,6 +24,10 @@ See the
 The SDK release notes are available on the
 [releases](https://github.com/google-ar/arcore-ios-sdk/releases) page.
 
+## User privacy requirements
+
+See the [User privacy requirements](https://developers.google.com/ar/develop/privacy-requirements).
+
 ## Additional Terms
 
 You must disclose the use of ARCore, and how it collects and processes data.
