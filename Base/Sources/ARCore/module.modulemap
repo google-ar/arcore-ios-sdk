@@ -1,0 +1,4 @@
+module ARCore {
+  export *
+  header "ARCore.h"
+}

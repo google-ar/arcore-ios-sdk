@@ -277,22 +277,14 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
   if ([anchor isKindOfClass:[ARPlaneAnchor class]]) {
     ARPlaneAnchor *planeAnchor = (ARPlaneAnchor *)anchor;
 
-    CGFloat width = planeAnchor.extent.x;
-    CGFloat height = planeAnchor.extent.z;
-    SCNPlane *plane = [SCNPlane planeWithWidth:width height:height];
-
-    plane.materials.firstObject.diffuse.contents = [UIColor colorWithRed:kPlaneColor[0]
-                                                                   green:kPlaneColor[1]
-                                                                    blue:kPlaneColor[2]
-                                                                   alpha:kPlaneColor[3]];
-
-    SCNNode *planeNode = [SCNNode nodeWithGeometry:plane];
-
-    CGFloat x = planeAnchor.center.x;
-    CGFloat y = planeAnchor.center.y;
-    CGFloat z = planeAnchor.center.z;
-    planeNode.position = SCNVector3Make(x, y, z);
-    planeNode.eulerAngles = SCNVector3Make(-M_PI / 2, 0, 0);
+    ARSCNPlaneGeometry *planeGeometry =
+        [ARSCNPlaneGeometry planeGeometryWithDevice:_sceneView.device];
+    [planeGeometry updateFromPlaneGeometry:planeAnchor.geometry];
+    planeGeometry.materials.firstObject.diffuse.contents = [UIColor colorWithRed:kPlaneColor[0]
+                                                                           green:kPlaneColor[1]
+                                                                            blue:kPlaneColor[2]
+                                                                           alpha:kPlaneColor[3]];
+    SCNNode *planeNode = [SCNNode nodeWithGeometry:planeGeometry];
 
     [node addChildNode:planeNode];
   }
@@ -310,17 +302,7 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
       ARPlaneAnchor *planeAnchor = (ARPlaneAnchor *)anchor;
 
       SCNNode *planeNode = node.childNodes.firstObject;
-      SCNPlane *plane = (SCNPlane *)planeNode.geometry;
-
-      CGFloat width = planeAnchor.extent.x;
-      CGFloat height = planeAnchor.extent.z;
-      plane.width = width;
-      plane.height = height;
-
-      CGFloat x = planeAnchor.center.x;
-      CGFloat y = planeAnchor.center.y;
-      CGFloat z = planeAnchor.center.z;
-      planeNode.position = SCNVector3Make(x, y, z);
+      [(ARSCNPlaneGeometry *)planeNode.geometry updateFromPlaneGeometry:planeAnchor.geometry];
     }
   }
 }
