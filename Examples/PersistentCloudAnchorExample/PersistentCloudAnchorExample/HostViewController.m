@@ -27,7 +27,7 @@ static float const kMaxDistance = 10;
 static int const kSecToMilliseconds = 1000;
 static NSString *const kDebugMessagePrefix = @"Debug panel\n";
 
-@interface HostViewController () <ARSCNViewDelegate, CloudAnchorManagerDelegate, GARSessionDelegate>
+@interface HostViewController () <ARSCNViewDelegate, CloudAnchorManagerDelegate>
 
 @property(nonatomic) NSMutableArray<SCNNode *> *qualityBars;
 @property(nonatomic) FeatureMapQualityBars *featureMapQualityBars;
@@ -139,9 +139,14 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
       break;
     case HostStateFinished:
       self.message = [NSString
-          stringWithFormat:@"Finished: %@", [self cloudStateString:self.garAnchor.cloudState]];
-      self.debugMessage =
-          [NSString stringWithFormat:@"Anchor %@ created", self.garAnchor.cloudIdentifier];
+          stringWithFormat:@"Finished: %@",
+                           [self cloudStateString:self.hostFuture.resultCloudAnchorState]];
+      if (self.hostFuture.resultCloudIdentifier) {
+        self.debugMessage =
+            [NSString stringWithFormat:@"Anchor %@ created", self.hostFuture.resultCloudIdentifier];
+      } else {
+        self.debugMessage = @"Anchor failed to host";
+      }
       break;
   }
   self.state = state;
@@ -214,6 +219,15 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
 
 #pragma mark - CloudAnchorManagerDelegate
 
+- (void)handleHostAnchor:(NSString *)anchorId cloudState:(GARCloudAnchorState)cloudState {
+  if (cloudState == GARCloudAnchorStateSuccess) {
+    double durationSec = [[NSDate date] timeIntervalSinceDate:self.hostBeginDate];
+    NSLog(@"Time taken to complete hosting process: %f ms", durationSec * kSecToMilliseconds);
+    [self sendSaveAlert:anchorId];
+  }
+  [self enterState:HostStateFinished];
+}
+
 - (void)cloudAnchorManager:(CloudAnchorManager *)manager
             didUpdateFrame:(GARFrame *)garFrame
                   tracking:(BOOL)tracking
@@ -229,7 +243,13 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
   float avg = [self.featureMapQualityBars featureMapQualityAvg];
   NSLog(@"History of average mapping quality calls: %f", avg);
   if (avg > kFeatureMapQualityThreshold) {
-    self.garAnchor = [self.cloudAnchorManager hostCloudAnchor:self.arAnchor error:nil];
+    __weak HostViewController *weakSelf = self;
+    self.hostFuture = [self.cloudAnchorManager
+        hostCloudAnchor:self.arAnchor
+             completion:^(NSString *anchorId, GARCloudAnchorState cloudState) {
+               [weakSelf handleHostAnchor:anchorId cloudState:cloudState];
+             }
+                  error:nil];
     [self enterState:HostStateHosting];
     self.hostBeginDate = [NSDate date];
     return;
@@ -315,20 +335,4 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
     [planeNode removeFromParentNode];
   }
 }
-
-#pragma mark - GARSessionDelegate
-
-- (void)session:(GARSession *)session didHostAnchor:(GARAnchor *)anchor {
-  self.garAnchor = anchor;
-  [self enterState:HostStateFinished];
-  double durationSec = [[NSDate date] timeIntervalSinceDate:self.hostBeginDate];
-  NSLog(@"Time taken to complete hosting process: %f ms", durationSec * kSecToMilliseconds);
-  [self sendSaveAlert:anchor.cloudIdentifier];
-}
-
-- (void)session:(GARSession *)session didFailToHostAnchor:(GARAnchor *)anchor {
-  self.garAnchor = anchor;
-  [self enterState:HostStateFinished];
-}
-
 @end

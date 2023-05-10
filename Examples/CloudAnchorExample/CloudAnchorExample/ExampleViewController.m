@@ -48,9 +48,7 @@ static NSString * const kPrivacyAlertBackButtonText = @"Not now";
 static NSString * const kPrivacyAlertLinkURL =
     @"https://developers.google.com/ar/data-privacy";
 
-@interface ExampleViewController () <ARSCNViewDelegate,
-                                     CloudAnchorManagerDelegate,
-                                     GARSessionDelegate>
+@interface ExampleViewController () <ARSCNViewDelegate, CloudAnchorManagerDelegate>
 
 @property(nonatomic, strong) ARAnchor *arAnchor;
 @property(nonatomic, strong) GARAnchor *garAnchor;
@@ -62,6 +60,9 @@ static NSString * const kPrivacyAlertLinkURL =
 
 @property(nonatomic, strong) NSString *roomCode;
 @property(nonatomic, strong) NSString *message;
+
+@property(nonatomic, strong) GARResolveCloudAnchorFuture *resolveFuture;
+@property(nonatomic, strong) GARHostCloudAnchorFuture *hostFuture;
 
 // Cloud Anchor Manager manages interaction between Firebase, GARSession, and ARSession.
 @property(nonatomic, strong) CloudAnchorManager *cloudAnchorManager;
@@ -120,19 +121,53 @@ static NSString * const kPrivacyAlertLinkURL =
 
 #pragma mark - Anchor Hosting / Resolving
 
+- (void)handleResolveAnchor:(GARAnchor *)anchor cloudState:(GARCloudAnchorState)cloudState {
+  if (self.state != HelloARStateResolving) {
+    return;
+  }
+  if (cloudState == GARCloudAnchorStateSuccess) {
+    self.garAnchor = anchor;
+    self.resolvedAnchorNode = [self andyNode];
+    self.resolvedAnchorNode.simdTransform = anchor.transform;
+    [self.sceneView.scene.rootNode addChildNode:self.resolvedAnchorNode];
+  }
+
+  [self enterState:HelloARStateResolvingFinished];
+}
+
 - (void)resolveAnchorWithRoomCode:(NSString *)roomCode {
   self.roomCode = roomCode;
   [self enterState:HelloARStateResolving];
-  [self.cloudAnchorManager resolveAnchorWithRoomCode:roomCode completion:^(GARAnchor *anchor) {
-    self.garAnchor = anchor;
-  }];
+
+  __weak ExampleViewController *weakSelf = self;
+  [self.cloudAnchorManager
+      resolveAnchorWithRoomCode:roomCode
+                     completion:^(GARAnchor *anchor, GARCloudAnchorState cloudState) {
+                       [weakSelf handleResolveAnchor:anchor cloudState:cloudState];
+                     }];
+}
+
+- (void)handleHostAnchor:(NSString *)anchorId cloudState:(GARCloudAnchorState)cloudState {
+  if (self.state != HelloARStateHosting) {
+    return;
+  }
+  if (cloudState == GARCloudAnchorStateSuccess) {
+    [self.cloudAnchorManager updateRoom:self.roomCode withAnchorId:anchorId];
+  }
+  [self enterState:HelloARStateHostingFinished];
 }
 
 - (void)addAnchorWithTransform:(matrix_float4x4)transform {
   self.arAnchor = [[ARAnchor alloc] initWithTransform:transform];
   [self.sceneView.session addAnchor:self.arAnchor];
 
-  self.garAnchor = [self.cloudAnchorManager hostCloudAnchor:self.arAnchor error:nil];
+  __weak ExampleViewController *weakSelf = self;
+  self.hostFuture = [self.cloudAnchorManager
+      hostCloudAnchor:self.arAnchor
+           completion:^(NSString *anchorId, GARCloudAnchorState cloudState) {
+             [weakSelf handleHostAnchor:anchorId cloudState:cloudState];
+           }
+                error:nil];
   [self enterState:HelloARStateHosting];
 }
 
@@ -185,7 +220,7 @@ static NSString * const kPrivacyAlertLinkURL =
     self.message =
         [NSString stringWithFormat:
                       @"garFrame is returned as a nil in "
-                      @"CloudAnchorManager:sessioin:session:didUPdateFrame: Error description: %@",
+                      @"CloudAnchorManager:sessioin:session:didUpdateFrame: Error description: %@",
                       [error localizedDescription]];
     [self updateMessageLabel];
     return;
@@ -199,53 +234,18 @@ static NSString * const kPrivacyAlertLinkURL =
 }
 
 - (void)cloudAnchorManager:(CloudAnchorManager *)manager
-    resolveCloudAnchorReturnNilWithError:(NSError *)error {
-  self.message = [NSString
-      stringWithFormat:@"Resolved Cloud Anchor returned nil"
-                       @"GARSession:resolveCloudAnchorWithIdentifier Error description: %@",
-                       [error localizedDescription]];
-  [self updateMessageLabel];
-  self.garAnchor = nil;
-  [self enterState:HelloARStateResolvingFinished];
-}
-
-#pragma mark - GARSessionDelegate
-
-- (void)session:(GARSession *)session didHostAnchor:(GARAnchor *)anchor {
-  if (self.state != HelloARStateHosting || ![anchor isEqual:self.garAnchor]) {
-    return;
+    startedResolvingCloudAnchor:(GARResolveCloudAnchorFuture *)future
+                          error:(NSError *)error {
+  if (future) {
+    self.resolveFuture = future;
+  } else {
+    self.message = [NSString
+        stringWithFormat:@"Resolved Cloud Anchor returned nil"
+                         @"GARSession:resolveCloudAnchorWithIdentifier Error description: %@",
+                         [error localizedDescription]];
+    [self updateMessageLabel];
+    [self enterState:HelloARStateResolvingFinished];
   }
-  self.garAnchor = anchor;
-  [self.cloudAnchorManager updateRoom:self.roomCode withAnchor:anchor];
-  [self enterState:HelloARStateHostingFinished];
-}
-
-- (void)session:(GARSession *)session didFailToHostAnchor:(GARAnchor *)anchor {
-  if (self.state != HelloARStateHosting || ![anchor isEqual:self.garAnchor]) {
-    return;
-  }
-  self.garAnchor = anchor;
-  [self enterState:HelloARStateHostingFinished];
-}
-
-- (void)session:(GARSession *)session didResolveAnchor:(GARAnchor *)anchor {
-  if (self.state != HelloARStateResolving || ![anchor isEqual:self.garAnchor]) {
-    return;
-  }
-
-  self.garAnchor = anchor;
-  self.resolvedAnchorNode = [self andyNode];
-  self.resolvedAnchorNode.simdTransform = anchor.transform;
-  [self.sceneView.scene.rootNode addChildNode:self.resolvedAnchorNode];
-  [self enterState:HelloARStateResolvingFinished];
-}
-
-- (void)session:(GARSession *)session didFailToResolveAnchor:(GARAnchor *)anchor {
-  if (self.state != HelloARStateResolving || ![anchor isEqual:self.garAnchor]) {
-    return;
-  }
-  self.garAnchor = anchor;
-  [self enterState:HelloARStateResolvingFinished];
 }
 
 # pragma mark - Helper Methods
@@ -422,6 +422,14 @@ static NSString * const kPrivacyAlertLinkURL =
           self.resolveTimer = nil;
         }
       }
+      if (self.hostFuture) {
+        [self.hostFuture cancel];
+        self.hostFuture = nil;
+      }
+      if (self.resolveFuture) {
+        [self.resolveFuture cancel];
+        self.resolveFuture = nil;
+      }
       [self toggleButton:self.hostButton enabled:YES title:@"HOST"];
       [self toggleButton:self.resolveButton enabled:YES title:@"RESOLVE"];
       self.roomCode = @"";
@@ -440,9 +448,9 @@ static NSString * const kPrivacyAlertLinkURL =
       self.message = @"Hosting anchor...";
       break;
     case HelloARStateHostingFinished:
-      self.message =
-          [NSString stringWithFormat:@"Finished hosting: %@",
-                                     [self cloudStateString:self.garAnchor.cloudState]];
+      self.message = [NSString
+          stringWithFormat:@"Finished hosting: %@",
+                           [self cloudStateString:self.hostFuture.resultCloudAnchorState]];
       break;
     case HelloARStateEnterRoomCode:
       [self showRoomCodeDialog];
@@ -464,9 +472,9 @@ static NSString * const kPrivacyAlertLinkURL =
         [self.resolveTimer invalidate];
         self.resolveTimer = nil;
       }
-      self.message =
-          [NSString stringWithFormat:@"Finished resolving: %@",
-                                     [self cloudStateString:self.garAnchor.cloudState]];
+      self.message = [NSString
+          stringWithFormat:@"Finished resolving: %@",
+                           [self cloudStateString:self.resolveFuture.resultCloudAnchorState]];
       break;
   }
   self.state = state;

@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong) IBOutlet UILabel *debugLabel;
 // Local anchor created by hitTest.
 @property(nonatomic, strong, nullable) ARAnchor *arAnchor;
-@property(nonatomic, strong, nullable) GARAnchor *garAnchor;
+@property(nonatomic, strong, nullable) GARHostCloudAnchorFuture *hostFuture;
 @property(nonatomic, assign) HostState state;
 @property(nonatomic, strong) NSString *cloudAnchorId;
 @property(nonatomic, strong) NSString *message;

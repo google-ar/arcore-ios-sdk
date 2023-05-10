@@ -34,8 +34,8 @@ let package = Package(
   ],
   targets: [
     .binaryTarget(
-      name: "ARCoreBase", url: "https://dl.google.com/arcore/swiftpm/1.36.0/Base.zip",
-      checksum: "ce56efd4a30e0d65d95459fc4cd1ad186b56bb179095423400a4bd5ada807f85"
+      name: "ARCoreBase", url: "https://dl.google.com/arcore/swiftpm/1.37.0/Base.zip",
+      checksum: "818886f60830c504f71914705b4bf173db4cce8bc6f90fd02217948d1e3096dd"
     ),
     .target(
       name: "Base",
@@ -50,8 +50,8 @@ let package = Package(
     ),
     .binaryTarget(
       name: "ARCoreCloudAnchors",
-      url: "https://dl.google.com/arcore/swiftpm/1.36.0/CloudAnchors.zip",
-      checksum: "548d25b408f9c21a5b20de64fd570a06e69c16fed10dea326ff045980ffee64d"
+      url: "https://dl.google.com/arcore/swiftpm/1.37.0/CloudAnchors.zip",
+      checksum: "1b711920baaee575d397bdc6671bc37650ba64ad1ef310f8f046ab2f574dccb1"
     ),
     .target(
       name: "CloudAnchors",
@@ -66,8 +66,8 @@ let package = Package(
       publicHeadersPath: "Sources"
     ),
     .binaryTarget(
-      name: "ARCoreGeospatial", url: "https://dl.google.com/arcore/swiftpm/1.36.0/Geospatial.zip",
-      checksum: "ee88f56df2c154f32a5bcb5c63208fef0ab021a83de7bb89208cbc5f193e20e7"
+      name: "ARCoreGeospatial", url: "https://dl.google.com/arcore/swiftpm/1.37.0/Geospatial.zip",
+      checksum: "02c59bc26fc051626bcc7a4493682e0ecd743b2d2bd06eccb1a7c54001ae81c7"
     ),
     .target(
       name: "Geospatial",
@@ -80,8 +80,8 @@ let package = Package(
       publicHeadersPath: "Sources"
     ),
     .binaryTarget(
-      name: "ARCoreGARSession", url: "https://dl.google.com/arcore/swiftpm/1.36.0/GARSession.zip",
-      checksum: "08b63e5d454a0063fbbe3102d09ec85a0c55426a1045dbf0cf5624aef9274e77"
+      name: "ARCoreGARSession", url: "https://dl.google.com/arcore/swiftpm/1.37.0/GARSession.zip",
+      checksum: "2f51ef1960406cabe29e782bdc6006885b4d4c17eef8a1a414eadff881fcf5d1"
     ),
     .target(
       name: "GARSession",
@@ -90,7 +90,6 @@ let package = Package(
         "Base",
         .product(name: "nanopb", package: "nanopb"),
         .product(name: "FirebaseRemoteConfig", package: "firebase-ios-sdk"),
-        .product(name: "GoogleDataTransport", package: "GoogleDataTransport"),
       ],
       path: "GARSession",
       sources: ["dummy.m"],
@@ -99,8 +98,8 @@ let package = Package(
     ),
     .binaryTarget(
       name: "ARCoreAugmentedFaces",
-      url: "https://dl.google.com/arcore/swiftpm/1.36.0/AugmentedFaces.zip",
-      checksum: "802d2c057b2a02d912db1d2450bdc70856e49b2fbf9eba2c7b8beb51f7cd1196"
+      url: "https://dl.google.com/arcore/swiftpm/1.37.0/AugmentedFaces.zip",
+      checksum: "36f7af3e75bc006f609f4ab4183c6399c76fb3d218bba748786b791a2243b8c6"
     ),
     .target(
       name: "AugmentedFaces",
@@ -108,7 +107,6 @@ let package = Package(
         "ARCoreAugmentedFaces",
         "Base",
         .product(name: "nanopb", package: "nanopb"),
-        .product(name: "GoogleDataTransport", package: "GoogleDataTransport"),
       ],
       path: "AugmentedFaces",
       sources: ["dummy.m"],

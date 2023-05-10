@@ -18,13 +18,12 @@
 
 static NSString *const kDebugMessagePrefix = @"Debug panel\n";
 
-@interface ResolveViewController () <ARSCNViewDelegate,
-                                     CloudAnchorManagerDelegate,
-                                     GARSessionDelegate>
+@interface ResolveViewController () <ARSCNViewDelegate, CloudAnchorManagerDelegate>
 
 // Nodes representing resolved GARAnchors. Updated when anchor changes.
-@property(nonatomic, strong) NSMutableDictionary<NSString *, SCNNode *> *idToResolvedAnchorNodes;
-@property(nonatomic, strong) NSMutableDictionary<NSString *, GARAnchor *> *idToGarAnchors;
+@property(nonatomic, strong) NSMutableDictionary<NSUUID *, SCNNode *> *idToResolvedAnchorNodes;
+@property(nonatomic, strong)
+    NSMutableDictionary<NSString *, GARResolveCloudAnchorFuture *> *idToFutures;
 
 @end
 
@@ -34,7 +33,7 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
 
 - (void)initProperty {
   _idToResolvedAnchorNodes = [NSMutableDictionary dictionary];
-  _idToGarAnchors = [NSMutableDictionary dictionary];
+  _idToFutures = [NSMutableDictionary dictionary];
 }
 
 - (void)viewDidLoad {
@@ -53,12 +52,39 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
 
 #pragma mark - Anchor Resolving
 
+- (void)handleResolveAnchor:(GARAnchor *)anchor
+                 cloudState:(GARCloudAnchorState)cloudState
+                   anchorId:(NSString *)anchorId {
+  if (self.state != ResolveStateResolving || ![self.idToFutures objectForKey:anchorId]) {
+    return;
+  }
+
+  if (cloudState == GARCloudAnchorStateSuccess) {
+    SCNNode *node = [self cloudAnchorNode];
+    node.simdTransform = anchor.transform;
+    [self.sceneView.scene.rootNode addChildNode:node];
+    self.idToResolvedAnchorNodes[anchor.identifier] = node;
+    self.debugMessage = [NSString
+        stringWithFormat:@"Resolved %@ continuing to refine pose.",
+                         [[self.idToResolvedAnchorNodes allKeys] componentsJoinedByString:@", "]];
+    [self updateMessageLabel];
+  }
+  [self updateResolveStatus];
+}
+
 // Encourage the user to look at a previously mapped area.
 - (void)resolveAnchors:(NSArray<NSString *> *)anchorIds {
   [self enterState:ResolveStateResolving];
+  __weak ResolveViewController *weakSelf = self;
   for (NSString *anchorId in anchorIds) {
-    self.idToGarAnchors[anchorId] = [self.cloudAnchorManager resolveAnchorWithAnchorId:anchorId
-                                                                                 error:nil];
+    self.idToFutures[anchorId] = [self.cloudAnchorManager
+        resolveAnchorWithAnchorId:anchorId
+                       completion:^(GARAnchor *anchor, GARCloudAnchorState cloudState) {
+                         [weakSelf handleResolveAnchor:anchor
+                                            cloudState:cloudState
+                                              anchorId:anchorId];
+                       }
+                            error:nil];
   }
 }
 
@@ -91,12 +117,12 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
     case ResolveStateFinished:
       self.message = [NSString stringWithFormat:@"Resolve Finished: \n"];
 
-      for (NSString *anchorId in [self.idToGarAnchors allKeys]) {
+      for (NSString *anchorId in [self.idToFutures allKeys]) {
         self.message = [self.message
             stringByAppendingString:
                 [NSString
-                    stringWithFormat:@"%@ ", [self cloudStateString:self.idToGarAnchors[anchorId]
-                                                                        .cloudState]]];
+                    stringWithFormat:@"%@ ", [self cloudStateString:self.idToFutures[anchorId]
+                                                                        .resultCloudAnchorState]]];
       }
       self.debugMessage = [NSString
           stringWithFormat:
@@ -142,9 +168,8 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
 
 - (void)updateResolveStatus {
   BOOL allFinished = YES;
-  for (NSString *anchorId in [self.idToGarAnchors allKeys]) {
-    if (self.idToGarAnchors[anchorId].cloudState == GARCloudAnchorStateNone ||
-        self.idToGarAnchors[anchorId].cloudState == GARCloudAnchorStateTaskInProgress) {
+  for (NSString *anchorId in [self.idToFutures allKeys]) {
+    if (self.idToFutures[anchorId].state == GARFutureStatePending) {
       allFinished = NO;
       break;
     }
@@ -164,10 +189,9 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
          featureMapQuality:(int)featureMapQuality {
   if (self.state == ResolveStateResolving) {
     for (GARAnchor *garAnchor in garFrame.updatedAnchors) {
-      if ([self.idToResolvedAnchorNodes objectForKey:garAnchor.cloudIdentifier]) {
-        self.idToResolvedAnchorNodes[garAnchor.cloudIdentifier].simdTransform = garAnchor.transform;
-        self.idToResolvedAnchorNodes[garAnchor.cloudIdentifier].hidden =
-            !garAnchor.hasValidTransform;
+      if ([self.idToResolvedAnchorNodes objectForKey:garAnchor.identifier]) {
+        self.idToResolvedAnchorNodes[garAnchor.identifier].simdTransform = garAnchor.transform;
+        self.idToResolvedAnchorNodes[garAnchor.identifier].hidden = !garAnchor.hasValidTransform;
       }
     }
   }
@@ -181,34 +205,6 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
   } else {
     return nil;
   }
-}
-
-#pragma mark - GARSessionDelegate
-
-- (void)session:(GARSession *)session didResolveAnchor:(GARAnchor *)anchor {
-  if (self.state != ResolveStateResolving ||
-      ![self.idToGarAnchors objectForKey:anchor.cloudIdentifier]) {
-    return;
-  }
-  self.idToGarAnchors[anchor.cloudIdentifier] = anchor;
-  SCNNode *node = [self cloudAnchorNode];
-  node.simdTransform = anchor.transform;
-  [self.sceneView.scene.rootNode addChildNode:node];
-  self.idToResolvedAnchorNodes[anchor.cloudIdentifier] = node;
-  self.debugMessage = [NSString
-      stringWithFormat:@"Resolved %@ continuing to refine pose.",
-                       [[self.idToResolvedAnchorNodes allKeys] componentsJoinedByString:@", "]];
-  [self updateMessageLabel];
-  [self updateResolveStatus];
-}
-
-- (void)session:(GARSession *)session didFailToResolveAnchor:(GARAnchor *)anchor {
-  if (self.state != ResolveStateResolving ||
-      ![self.idToGarAnchors objectForKey:anchor.cloudIdentifier]) {
-    return;
-  }
-  self.idToGarAnchors[anchor.cloudIdentifier] = anchor;
-  [self updateResolveStatus];
 }
 
 @end

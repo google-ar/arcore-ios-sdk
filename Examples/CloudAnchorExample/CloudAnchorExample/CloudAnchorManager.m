@@ -69,15 +69,8 @@
       [self popupAlertWindowOnError:alertWindowTitle alertMessage:alertMessage];
       return nil;
     }
-
-    _gSession.delegateQueue = dispatch_get_main_queue();
   }
   return self;
-}
-
-- (void)setDelegate:(id<CloudAnchorManagerDelegate>)delegate {
-  _delegate = delegate;
-  self.gSession.delegate = delegate;
 }
 
 #pragma mark - ARSessionDelegate
@@ -147,68 +140,54 @@
       }];
 }
 
-- (void)updateRoom:(NSString *)roomCode withAnchor:(GARAnchor *)anchor {
+- (void)updateRoom:(NSString *)roomCode withAnchorId:(NSString *)anchorId {
   [[[[self.firebaseReference child:@"hotspot_list"] child:roomCode] child:@"hosted_anchor_id"]
-      setValue:anchor.cloudIdentifier];
+      setValue:anchorId];
   long long timestampInteger = (long long)([[NSDate date] timeIntervalSince1970] * 1000);
   NSNumber *timestamp = [NSNumber numberWithLongLong:timestampInteger];
   [[[[self.firebaseReference child:@"hotspot_list"] child:roomCode] child:@"updated_at_timestamp"]
       setValue:timestamp];
 }
 
+- (void)doResolveAnchor:(FIRDataSnapshot *)snapshot
+               roomCode:(NSString *)roomCode
+             completion:(void (^)(GARAnchor *, GARCloudAnchorState))completion {
+  NSString *anchorId = nil;
+  if ([snapshot.value isKindOfClass:[NSDictionary class]]) {
+    NSDictionary<NSString *, NSObject *> *value = (NSDictionary *)snapshot.value;
+    anchorId = (NSString *)value[@"hosted_anchor_id"];
+  }
+
+  if (anchorId) {
+    [[[self.firebaseReference child:@"hotspot_list"] child:roomCode] removeAllObservers];
+
+    // Now that we have the anchor ID from firebase, we resolve the anchor.
+    NSError *error = nil;
+    GARResolveCloudAnchorFuture *garFuture =
+        [self.gSession resolveCloudAnchorWithIdentifier:anchorId
+                                      completionHandler:completion
+                                                  error:&error];
+
+    // Synchronous failure.
+    if (garFuture == nil) {
+      NSString *alertWindowTitle = @"An error occurred";
+      NSString *alertMessage = [NSString
+          stringWithFormat:@"Error resolving cloud anchor: %@", [error localizedDescription]];
+      [self popupAlertWindowOnError:alertWindowTitle alertMessage:alertMessage];
+    }
+
+    // Pass message to delegate for state management
+    [self.delegate cloudAnchorManager:self startedResolvingCloudAnchor:garFuture error:error];
+  }
+}
+
 - (void)resolveAnchorWithRoomCode:(NSString *)roomCode
-                       completion:(void (^)(GARAnchor *))completion {
+                       completion:(void (^)(GARAnchor *, GARCloudAnchorState))completion {
   __weak CloudAnchorManager *weakSelf = self;
   [[[self.firebaseReference child:@"hotspot_list"] child:roomCode]
       observeEventType:FIRDataEventTypeValue
              withBlock:^(FIRDataSnapshot *_Nonnull snapshot) {
-               CloudAnchorManager *strongSelf = weakSelf;
-               if (strongSelf == nil) {
-                 return;
-               }
-
-               NSString *anchorId = nil;
-               if ([snapshot.value isKindOfClass:[NSDictionary class]]) {
-                 NSDictionary<NSString *, NSObject *> *value = (NSDictionary *)snapshot.value;
-                 anchorId = (NSString *)value[@"hosted_anchor_id"];
-               }
-
-               if (anchorId) {
-                 [[[strongSelf.firebaseReference child:@"hotspot_list"] child:roomCode]
-                     removeAllObservers];
-
-                 // Now that we have the anchor ID from firebase, we resolve the anchor.
-                 // Synchronous failures will return nil. The causes may be invalid arguments, etc.
-                 // Asynchronous failures (garAnchor is returned as a nonnull) is handled by
-                 // session:didFailToResolveAnchor. Success is handled by the delegate methods
-                 // session:didResolveAnchor. When garAnchor is returned as a nil, it means
-                 // synchronous failures happened where no delegate is called. When garAnchor is
-                 // returned as a nonnull, while some asynchronous failure happened, it is handled
-                 // by session:didFailToResolveAnchor.
-                 NSError *error = nil;
-                 GARAnchor *garAnchor =
-                     [strongSelf.gSession resolveCloudAnchorWithIdentifier:anchorId error:&error];
-
-                 // Synchronous failure. Refer to the code
-                 if (garAnchor == nil) {
-                   NSString *alertWindowTitle = @"An error occurred";
-                   NSString *alertMessage = [NSString
-                       stringWithFormat:
-                           @"GARAnchor is returned as a nil in "
-                           @"CloudAnchorManager:resolveAnchorWithRoomCode. Error description: %@",
-                           [error localizedDescription]];
-                   [self popupAlertWindowOnError:alertWindowTitle alertMessage:alertMessage];
-
-                   // Synchronous error in GARSession:resolveCloudAnchorWithIdentifier.
-                   // Pass message to delegate for state management
-                   [self.delegate cloudAnchorManager:self
-                       resolveCloudAnchorReturnNilWithError:error];
-
-                   return;
-                 }
-
-                 completion(garAnchor);
-               }
+               [weakSelf doResolveAnchor:snapshot roomCode:roomCode completion:completion];
              }];
 }
 
@@ -216,10 +195,13 @@
   [[[self.firebaseReference child:@"hotspot_list"] child:roomCode] removeAllObservers];
 }
 
-- (GARAnchor *)hostCloudAnchor:(ARAnchor *)arAnchor error:(NSError **)error {
-  // To share an anchor, we call host anchor here on the ARCore session.
-  // session:didHostAnchor: session:didFailToHostAnchor: will get called appropriately.
-  return [self.gSession hostCloudAnchor:arAnchor error:error];
+- (GARHostCloudAnchorFuture *)hostCloudAnchor:(ARAnchor *)arAnchor
+                                   completion:(void (^)(NSString *, GARCloudAnchorState))completion
+                                        error:(NSError **)error {
+  return [self.gSession hostCloudAnchor:arAnchor
+                                TTLDays:1
+                      completionHandler:completion
+                                  error:error];
 }
 
 - (void)removeAnchor:(GARAnchor *)anchor {

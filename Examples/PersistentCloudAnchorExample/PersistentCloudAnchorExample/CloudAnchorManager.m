@@ -49,11 +49,6 @@
   return self;
 }
 
-- (void)setDelegate:(id<CloudAnchorManagerDelegate>)delegate {
-  _delegate = delegate;
-  self.gSession.delegate = delegate;
-}
-
 #pragma mark - ARSessionDelegate
 
 - (void)session:(ARSession *)session didUpdateFrame:(ARFrame *)frame {
@@ -84,20 +79,26 @@
 
 #pragma mark - Public
 
-- (GARAnchor *)hostCloudAnchor:(ARAnchor *)arAnchor error:(NSError **)error {
-  // To share an anchor, we call host anchor here on the ARCore session.
-  // session:didHostAnchor: session:didFailToHostAnchor: will get called appropriately.
-  // Creating a Cloud Anchor with lifetime  = 1 day. This is configurable up to 365 days.
+- (GARHostCloudAnchorFuture *)hostCloudAnchor:(ARAnchor *)arAnchor
+                                   completion:(void (^)(NSString *, GARCloudAnchorState))completion
+                                        error:(NSError **)error {
+  // Creating a Cloud Anchor with lifetime = 1 day. This is configurable up to 365 days.
   // If you want TTL > 1, please use the constructor sessionWithError: and use setAuthToken:.
   // Details can be found in
   // https://developers.google.com/ar/develop/ios/persistent-cloud-anchors
-  return [self.gSession hostCloudAnchor:arAnchor TTLDays:1 error:error];
+  return [self.gSession hostCloudAnchor:arAnchor
+                                TTLDays:1
+                      completionHandler:completion
+                                  error:error];
 }
 
-- (GARAnchor *)resolveAnchorWithAnchorId:(NSString *)anchorId error:(NSError **)error {
-  // To resolve an anchor, we call resolve anchor here on the ARCore session.
-  // session:didResolveAnchor: session:didFailToResolveAnchor: will get called appropriately.
-  return [self.gSession resolveCloudAnchorWithIdentifier:anchorId error:error];
+- (GARResolveCloudAnchorFuture *)resolveAnchorWithAnchorId:(NSString *)anchorId
+                                                completion:(void (^)(GARAnchor *_Nullable,
+                                                                     GARCloudAnchorState))completion
+                                                     error:(NSError **)error {
+  return [self.gSession resolveCloudAnchorWithIdentifier:anchorId
+                                       completionHandler:completion
+                                                   error:error];
 }
 
 - (void)removeAnchor:(GARAnchor *)anchor {
