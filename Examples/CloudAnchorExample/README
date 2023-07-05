@@ -15,6 +15,6 @@ To integrate with ARCore and FirebaseDatabase using CocoaPods:
 
 To integrate with Swift Package Manager:
 1) Open CloudAnchorExample.xcodeproj.
-2) Add dependencies on the 'ARCoreCloudAnchors' product of the ARCore package
-   and the 'FirebaseDatabase' product of the Firebase package (hosted at
-   https://github.com/firebase/firebase-ios-sdk.git).
+2) Follow instructions on https://developers.google.com/ar/develop/ios/enable-arcore#use_swift_package_manager to add the 'ARCoreCloudAnchors' product of the ARCore package.
+3) Additionally, add the 'FirebaseDatabase' product of the Firebase package (hosted at
+   https://github.com/firebase/firebase-ios-sdk.git). Ensure 'Up to Next Major Version' is selected, and choose the latest release from https://github.com/firebase/firebase-ios-sdk/releases.
