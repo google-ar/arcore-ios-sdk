@@ -1,5 +1,5 @@
 target 'CloudAnchorExample'
 use_frameworks!
 platform :ios, '11.0'
-pod 'ARCore/CloudAnchors', '~> 1.38.0'
+pod 'ARCore/CloudAnchors', '~> 1.39.0'
 pod 'Firebase/Database', '~> 8.0'

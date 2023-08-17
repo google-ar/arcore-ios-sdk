@@ -65,9 +65,7 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
   CGPoint touchLocation = [touch locationInView:self.sceneView];
   ARHitTestResultType hitTestResultTypes =
       ARHitTestResultTypeExistingPlaneUsingExtent | ARHitTestResultTypeEstimatedHorizontalPlane;
-  if (@available(iOS 11.3, *)) {
-    hitTestResultTypes = hitTestResultTypes | ARHitTestResultTypeEstimatedVerticalPlane;
-  }
+  hitTestResultTypes = hitTestResultTypes | ARHitTestResultTypeEstimatedVerticalPlane;
   NSArray<ARHitTestResult *> *hitTestResults = [self.sceneView hitTest:touchLocation
                                                                  types:hitTestResultTypes];
 
@@ -113,11 +111,7 @@ static NSString *const kDebugMessagePrefix = @"Debug panel\n";
 - (void)runSession {
   ARWorldTrackingConfiguration *configuration = [[ARWorldTrackingConfiguration alloc] init];
   [configuration setWorldAlignment:ARWorldAlignmentGravity];
-  if (@available(iOS 11.3, *)) {
-    [configuration setPlaneDetection:ARPlaneDetectionHorizontal | ARPlaneDetectionVertical];
-  } else {
-    [configuration setPlaneDetection:ARPlaneDetectionHorizontal];
-  }
+  [configuration setPlaneDetection:ARPlaneDetectionHorizontal | ARPlaneDetectionVertical];
 
   [self.sceneView.session runWithConfiguration:configuration];
 }
