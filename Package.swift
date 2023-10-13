@@ -18,12 +18,13 @@
 import PackageDescription
 
 let package = Package(
-  name: "ARCore", platforms: [.iOS(.v11)],
+  name: "ARCore", platforms: [.iOS(.v12)],
   products: [
     .library(name: "ARCoreCloudAnchors", targets: ["CloudAnchors"]),
     .library(name: "ARCoreGeospatial", targets: ["Geospatial"]),
     .library(name: "ARCoreGARSession", targets: ["GARSession"]),
     .library(name: "ARCoreAugmentedFaces", targets: ["AugmentedFaces"]),
+    .library(name: "ARCoreSemantics", targets: ["Semantics"]),
   ],
   dependencies: [
     .package(url: "https://github.com/firebase/nanopb.git", "2.30909.0"..<"2.30910.0"),
@@ -34,8 +35,8 @@ let package = Package(
   ],
   targets: [
     .binaryTarget(
-      name: "ARCoreBase", url: "https://dl.google.com/arcore/swiftpm/1.39.0/Base.zip",
-      checksum: "a2245887bf36f30da2ea4c53ccbcd5a1a85dec146d26e210e666c6afb2e28865"
+      name: "ARCoreBase", url: "https://dl.google.com/arcore/swiftpm/1.40.0/Base.zip",
+      checksum: "bd06e95119c7050ff64e1c98c248bf88af73d760d19c3c8e94b0c2761641ada9"
     ),
     .target(
       name: "Base",
@@ -50,8 +51,8 @@ let package = Package(
     ),
     .binaryTarget(
       name: "ARCoreCloudAnchors",
-      url: "https://dl.google.com/arcore/swiftpm/1.39.0/CloudAnchors.zip",
-      checksum: "93c58249a9fdb59c50ab5a6c4eb2a4cf1cab42737e7d00674f73e50ecc5f1762"
+      url: "https://dl.google.com/arcore/swiftpm/1.40.0/CloudAnchors.zip",
+      checksum: "7ccd2a388f6f0b014f79e45a68c2cc4857a87e67b8f34a195a4cb28877cfa813"
     ),
     .target(
       name: "CloudAnchors",
@@ -66,8 +67,8 @@ let package = Package(
       publicHeadersPath: "Sources"
     ),
     .binaryTarget(
-      name: "ARCoreGeospatial", url: "https://dl.google.com/arcore/swiftpm/1.39.0/Geospatial.zip",
-      checksum: "3275057560df9bb5db6c4a5acf12d63b49cf1685166e06a0519510e333e07030"
+      name: "ARCoreGeospatial", url: "https://dl.google.com/arcore/swiftpm/1.40.0/Geospatial.zip",
+      checksum: "bbb51c6cb434619c791cc3631e0665d0f047e51881e2de71e24ce3a60661a30c"
     ),
     .target(
       name: "Geospatial",
@@ -80,8 +81,8 @@ let package = Package(
       publicHeadersPath: "Sources"
     ),
     .binaryTarget(
-      name: "ARCoreGARSession", url: "https://dl.google.com/arcore/swiftpm/1.39.0/GARSession.zip",
-      checksum: "a570003edaddb74a4c12de4437a66a4edd5b886f77c662aaf56f528c6389496f"
+      name: "ARCoreGARSession", url: "https://dl.google.com/arcore/swiftpm/1.40.0/GARSession.zip",
+      checksum: "7543c283d34e76f9d2655cd28a7f3d1e053e458be5c62f99e1aa799d81e917ea"
     ),
     .target(
       name: "GARSession",
@@ -98,19 +99,50 @@ let package = Package(
     ),
     .binaryTarget(
       name: "ARCoreAugmentedFaces",
-      url: "https://dl.google.com/arcore/swiftpm/1.39.0/AugmentedFaces.zip",
-      checksum: "1b7a99e863464a9d627b02c172a83553d24ff21adc197fd7252b8ed09bfecdf4"
+      url: "https://dl.google.com/arcore/swiftpm/1.40.0/AugmentedFaces.zip",
+      checksum: "a498adba9d05d1f5b6914be84d282f18c7be3c430a4435dff4803988e35adf32"
     ),
     .target(
       name: "AugmentedFaces",
       dependencies: [
         "ARCoreAugmentedFaces",
         "Base",
+        "TFShared",
         .product(name: "nanopb", package: "nanopb"),
       ],
       path: "AugmentedFaces",
       sources: ["dummy.m"],
       resources: [.copy("Resources/ARCoreFaceResources")],
+      publicHeadersPath: "Sources"
+    ),
+    .binaryTarget(
+      name: "ARCoreSemantics", url: "https://dl.google.com/arcore/swiftpm/1.40.0/Semantics.zip",
+      checksum: "1bc561c765e26d885a58f94500f3d44f1842c3c7c204903ecf6e5ebb10339888"
+    ),
+    .target(
+      name: "Semantics",
+      dependencies: [
+        "ARCoreSemantics",
+        "GARSession",
+        "TFShared",
+      ],
+      path: "Semantics",
+      sources: ["dummy.m"],
+      resources: [.copy("Resources/ARCoreCoreMLSemanticsResources")],
+      publicHeadersPath: "Sources"
+    ),
+    .binaryTarget(
+      name: "ARCoreTFShared", url: "https://dl.google.com/arcore/swiftpm/1.40.0/TFShared.zip",
+      checksum: "05147bbdeba14846b8bcd0f2801477fe9503db6c74ae73e7ab762a3b7ecb7cca"
+    ),
+    .target(
+      name: "TFShared",
+      dependencies: [
+        "ARCoreTFShared",
+        "Base",
+      ],
+      path: "TFShared",
+      sources: ["dummy.m"],
       publicHeadersPath: "Sources"
     ),
   ]
