@@ -35,8 +35,8 @@ let package = Package(
   ],
   targets: [
     .binaryTarget(
-      name: "ARCoreBase", url: "https://dl.google.com/arcore/swiftpm/1.40.0/Base.zip",
-      checksum: "bd06e95119c7050ff64e1c98c248bf88af73d760d19c3c8e94b0c2761641ada9"
+      name: "ARCoreBase", url: "https://dl.google.com/arcore/swiftpm/1.41.0/Base.zip",
+      checksum: "88af8a78467f468e818c82b4c1d45fc751d9013e7f7e4cb5d80d33bd64611b94"
     ),
     .target(
       name: "Base",
@@ -51,8 +51,8 @@ let package = Package(
     ),
     .binaryTarget(
       name: "ARCoreCloudAnchors",
-      url: "https://dl.google.com/arcore/swiftpm/1.40.0/CloudAnchors.zip",
-      checksum: "7ccd2a388f6f0b014f79e45a68c2cc4857a87e67b8f34a195a4cb28877cfa813"
+      url: "https://dl.google.com/arcore/swiftpm/1.41.0/CloudAnchors.zip",
+      checksum: "d40884d8f0c7dc8610ee183d1a7e86f1428f4ce9f379c0fcfa29e410d6d77477"
     ),
     .target(
       name: "CloudAnchors",
@@ -67,8 +67,8 @@ let package = Package(
       publicHeadersPath: "Sources"
     ),
     .binaryTarget(
-      name: "ARCoreGeospatial", url: "https://dl.google.com/arcore/swiftpm/1.40.0/Geospatial.zip",
-      checksum: "bbb51c6cb434619c791cc3631e0665d0f047e51881e2de71e24ce3a60661a30c"
+      name: "ARCoreGeospatial", url: "https://dl.google.com/arcore/swiftpm/1.41.0/Geospatial.zip",
+      checksum: "eff7b2693f0b31e3acc68f4ad86125d108d29ee7b6599a877a0fbec81352c26b"
     ),
     .target(
       name: "Geospatial",
@@ -81,8 +81,8 @@ let package = Package(
       publicHeadersPath: "Sources"
     ),
     .binaryTarget(
-      name: "ARCoreGARSession", url: "https://dl.google.com/arcore/swiftpm/1.40.0/GARSession.zip",
-      checksum: "7543c283d34e76f9d2655cd28a7f3d1e053e458be5c62f99e1aa799d81e917ea"
+      name: "ARCoreGARSession", url: "https://dl.google.com/arcore/swiftpm/1.41.0/GARSession.zip",
+      checksum: "c9ff068f64dc2d504b98c48cead9615b1ad8c4bb729eee15ac5d4f4f833cfbc5"
     ),
     .target(
       name: "GARSession",
@@ -99,8 +99,8 @@ let package = Package(
     ),
     .binaryTarget(
       name: "ARCoreAugmentedFaces",
-      url: "https://dl.google.com/arcore/swiftpm/1.40.0/AugmentedFaces.zip",
-      checksum: "a498adba9d05d1f5b6914be84d282f18c7be3c430a4435dff4803988e35adf32"
+      url: "https://dl.google.com/arcore/swiftpm/1.41.0/AugmentedFaces.zip",
+      checksum: "79abea8b4362a12bba86c0fdce41fca4e3daf238abeaac98f934d948ad577e47"
     ),
     .target(
       name: "AugmentedFaces",
@@ -116,8 +116,8 @@ let package = Package(
       publicHeadersPath: "Sources"
     ),
     .binaryTarget(
-      name: "ARCoreSemantics", url: "https://dl.google.com/arcore/swiftpm/1.40.0/Semantics.zip",
-      checksum: "1bc561c765e26d885a58f94500f3d44f1842c3c7c204903ecf6e5ebb10339888"
+      name: "ARCoreSemantics", url: "https://dl.google.com/arcore/swiftpm/1.41.0/Semantics.zip",
+      checksum: "acf7ecf8a6f0ff52085c4ad7e8d33adfc37a4e04b2071227100643656f61a6e0"
     ),
     .target(
       name: "Semantics",
@@ -132,8 +132,8 @@ let package = Package(
       publicHeadersPath: "Sources"
     ),
     .binaryTarget(
-      name: "ARCoreTFShared", url: "https://dl.google.com/arcore/swiftpm/1.40.0/TFShared.zip",
-      checksum: "05147bbdeba14846b8bcd0f2801477fe9503db6c74ae73e7ab762a3b7ecb7cca"
+      name: "ARCoreTFShared", url: "https://dl.google.com/arcore/swiftpm/1.41.0/TFShared.zip",
+      checksum: "2b858b60a9182dc97d017fe34d1a2b34b1766da8ac8c706560361acfb050ecbc"
     ),
     .target(
       name: "TFShared",
