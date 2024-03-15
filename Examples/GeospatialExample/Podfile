@@ -1,4 +1,4 @@
 target 'GeospatialExample'
 use_frameworks!
 platform :ios, '12.0'
-pod 'ARCore/Geospatial', '~> 1.41.0'
+pod 'ARCore/Geospatial', '~> 1.42.0'
