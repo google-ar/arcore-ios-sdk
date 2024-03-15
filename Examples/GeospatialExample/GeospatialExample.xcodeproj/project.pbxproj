@@ -23,7 +23,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		3EFA88E528810CB600569759 /* GeospatialExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GeospatialExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3E1BD015268A5E39004480BC /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		3E1BD016268A5E39004480BC /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		3E1BD01B268A5E39004480BC /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
@@ -39,6 +38,7 @@
 		3E7EDD4227F388F900625E56 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		3E7EDD4427F388FF00625E56 /* SceneKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SceneKit.framework; path = System/Library/Frameworks/SceneKit.framework; sourceTree = SDKROOT; };
 		3E7EDD4627F3890500625E56 /* ModelIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ModelIO.framework; path = System/Library/Frameworks/ModelIO.framework; sourceTree = SDKROOT; };
+		3EFA88E528810CB600569759 /* GeospatialExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GeospatialExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E031D2DA2880C182001E3A27 /* spatial-marker-yellow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "spatial-marker-yellow.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -111,8 +111,6 @@
 			dependencies = (
 			);
 			name = GeospatialExample;
-			packageProductDependencies = (
-			);
 			productName = GeospatialExample;
 			productReference = 3EFA88E528810CB600569759 /* GeospatialExample.app */;
 			productType = "com.apple.product-type.application";

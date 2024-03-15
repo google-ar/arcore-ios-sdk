@@ -1,0 +1,4 @@
+target 'GeospatialSwiftExample'
+use_frameworks!
+platform :ios, '14.0'
+pod 'ARCore/Geospatial', '~> 1.35.0'
