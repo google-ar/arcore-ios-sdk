@@ -160,6 +160,12 @@ typedef NS_ENUM(NSInteger, AnchorType) {
 /** Whether we have restored anchors saved from the previous session. */
 @property(nonatomic) BOOL restoredSavedAnchors;
 
+/**
+ * Will we restore the saved anchors this frame, keep track of this to avoid the race condition
+ * where the frame.anchors is used after the anchor is added.
+ */
+@property(nonatomic) BOOL willRestoreSavedAnchors;
+
 /** Whether the last anchor is terrain anchor. */
 @property(nonatomic) BOOL islastClickedTerrainAnchorButton;
 
@@ -578,7 +584,7 @@ typedef NS_ENUM(NSInteger, AnchorType) {
           geospatialTransform.orientationYawAccuracy <= kOrientationYawAccuracyLowThreshold) {
         self.localizationState = LocalizationStateLocalized;
         if (!self.restoredSavedAnchors) {
-          [self addSavedAnchors];
+          self.willRestoreSavedAnchors = YES;
           self.restoredSavedAnchors = YES;
         }
       } else if ([now timeIntervalSinceDate:self.lastStartLocalizationDate] >=
@@ -670,6 +676,12 @@ typedef NS_ENUM(NSInteger, AnchorType) {
         [node removeFromParentNode];
         [self.markerNodes removeObjectForKey:anchorID];
       }
+    }
+
+    // Add saved anchors separately since they will not be present until the next GARFrame.
+    if (self.willRestoreSavedAnchors) {
+      [self addSavedAnchors];
+      self.willRestoreSavedAnchors = NO;
     }
   }
 }
