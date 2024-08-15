@@ -5,7 +5,7 @@ More details are in: https://developers.google.com/ar/develop/ios/cloud-anchors/
 1) The sample app uses Firebase. See https://firebase.google.com/docs/ios/setup for setup instructions.
    Download the GoogleService-Info.plist file and place it next to Info.plist.
    Enable the ARCore API (https://console.cloud.google.com/apis/library/arcore) for your Google Cloud Platform project.
-2) Modify CloudAnchorManager.m to use your API key (search for sessionWithAPIKey:).
+2) Modify CloudAnchorManager.swift to use your API key (search for 'apiKey').
 3) Integrate with the ARCore and FirebaseDatabase SDKs (see below).
 4) Change bundle ID, so that you can sign the app with your team.
 
@@ -16,5 +16,5 @@ To integrate with ARCore and FirebaseDatabase using CocoaPods:
 To integrate with Swift Package Manager:
 1) Open CloudAnchorExample.xcodeproj.
 2) Follow instructions on https://developers.google.com/ar/develop/ios/enable-arcore#use_swift_package_manager to add the 'ARCoreCloudAnchors' product of the ARCore package.
-3) Additionally, add the 'FirebaseDatabase' product of the Firebase package (hosted at
+3) Additionally, add the 'FirebaseDatabaseSwift' product of the Firebase package (hosted at
    https://github.com/firebase/firebase-ios-sdk.git). Ensure 'Up to Next Major Version' is selected, and choose the latest release from https://github.com/firebase/firebase-ios-sdk/releases.

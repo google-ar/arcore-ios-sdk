@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
+import ARCore
 import AVFoundation
 import CoreMedia
 import CoreMotion
 import SceneKit
 import UIKit
-
-  import ARCore
 
 /// Demonstrates how to use ARCore Augmented Faces with SceneKit.
 public final class FacesViewController: UIViewController {

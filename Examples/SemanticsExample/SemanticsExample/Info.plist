@@ -24,17 +24,24 @@
 	<string>Camera permission is needed for AR mode.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
-	<key>UIMainStoryboardFile</key>
-	<string>Main</string>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UILaunchScreen</key>
+		<dict/>
+	</dict>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arkit</string>
 	</array>
 	<key>UIRequiresFullScreen</key>
 	<true/>
-	<key>UISupportedInterfaceOrientations</key>
+	<key>UIStatusBarHidden</key>
+	<false/>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~iphone</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>

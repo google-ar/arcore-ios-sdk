@@ -1,4 +1,4 @@
 target 'AugmentedFacesExample'
 use_frameworks!
 platform :ios, '12.0'
-pod 'ARCore/AugmentedFaces', '~> 1.44.0'
+pod 'ARCore/AugmentedFaces', '~> 1.45.0'

@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
+import ARCore
 import SceneKit
-
-  import ARCore
 
 /// Contains all objects needed to hold a face mesh. Used for multi-buffering.
 private class FaceMesh {

@@ -1,6 +1,7 @@
 # Semantics API sample app for iOS
 
 This sample app shows how to use the ARCore Scene Semantics API for iOS.
+Note: Building with the release config is required for good performance.
 
 # Setup
 

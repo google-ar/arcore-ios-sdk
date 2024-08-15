@@ -36,5 +36,5 @@ cloud project and enable the [ARCore API](https://console.cloud.google.com/apis/
 Make sure your API key is either unrestricted by app, or allows your specific
 bundle ID.
 
-You will need to paste your API key into `ViewController.m` (search for
-`sessionWithAPIKey:`).
+You will need to paste your API key into `GeospatialManager.swift` (search for
+'apiKey').

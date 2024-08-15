@@ -3,94 +3,72 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 56;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		3E1BD017268A5E39004480BC /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3E1BD016268A5E39004480BC /* AppDelegate.m */; };
-		3E1BD01D268A5E39004480BC /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3E1BD01C268A5E39004480BC /* ViewController.m */; };
-		3E1BD020268A5E39004480BC /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E1BD01E268A5E39004480BC /* Main.storyboard */; };
-		3E1BD022268A5E3B004480BC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3E1BD021268A5E3B004480BC /* Assets.xcassets */; };
-		3E1BD025268A5E3B004480BC /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3E1BD023268A5E3B004480BC /* LaunchScreen.storyboard */; };
-		3E1BD028268A5E3B004480BC /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3E1BD027268A5E3B004480BC /* main.m */; };
-		3E33285B27F3A5B0005C5C5F /* geospatial_marker.obj in Resources */ = {isa = PBXBuildFile; fileRef = 3E33285A27F3A5B0005C5C5F /* geospatial_marker.obj */; };
-		3E7EDD3F27F3872700625E56 /* spatial-marker-baked.png in Resources */ = {isa = PBXBuildFile; fileRef = 3E7EDD3D27F3872700625E56 /* spatial-marker-baked.png */; };
-		3E7EDD4127F388F200625E56 /* ARKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E7EDD4027F388F200625E56 /* ARKit.framework */; };
-		3E7EDD4327F388F900625E56 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E7EDD4227F388F900625E56 /* CoreLocation.framework */; };
-		3E7EDD4527F388FF00625E56 /* SceneKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E7EDD4427F388FF00625E56 /* SceneKit.framework */; };
-		3E7EDD4727F3890500625E56 /* ModelIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E7EDD4627F3890500625E56 /* ModelIO.framework */; };
-		E031D2DB2880C182001E3A27 /* spatial-marker-yellow.png in Resources */ = {isa = PBXBuildFile; fileRef = E031D2DA2880C182001E3A27 /* spatial-marker-yellow.png */; };
+		3E209CE62C40496F00C4992C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E209CE52C40496F00C4992C /* ContentView.swift */; };
+		3E209CE82C40497000C4992C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3E209CE72C40497000C4992C /* Assets.xcassets */; };
+		3E209CF22C40519200C4992C /* GeospatialExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E209CF12C40519200C4992C /* GeospatialExampleApp.swift */; };
+		3E209CF62C40551000C4992C /* ARViewContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E209CF52C40551000C4992C /* ARViewContainer.swift */; };
+		3E209CF82C40823300C4992C /* GeospatialManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E209CF72C40823300C4992C /* GeospatialManager.swift */; };
+		3E209D002C419B2800C4992C /* spatial-marker-baked.png in Resources */ = {isa = PBXBuildFile; fileRef = 3E209CFD2C419B2800C4992C /* spatial-marker-baked.png */; };
+		3E209D012C419B2800C4992C /* spatial-marker-yellow.png in Resources */ = {isa = PBXBuildFile; fileRef = 3E209CFE2C419B2800C4992C /* spatial-marker-yellow.png */; };
+		3E209D032C419E1900C4992C /* geospatial_marker.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 3E209D022C419E1900C4992C /* geospatial_marker.usdz */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		3EFA88E528810CB600569759 /* GeospatialExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GeospatialExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		3E1BD015268A5E39004480BC /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		3E1BD016268A5E39004480BC /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		3E1BD01B268A5E39004480BC /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		3E1BD01C268A5E39004480BC /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
-		3E1BD01F268A5E39004480BC /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		3E1BD021268A5E3B004480BC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		3E1BD024268A5E3B004480BC /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		3E1BD026268A5E3B004480BC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		3E1BD027268A5E3B004480BC /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		3E33285A27F3A5B0005C5C5F /* geospatial_marker.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = geospatial_marker.obj; sourceTree = "<group>"; };
-		3E7EDD3D27F3872700625E56 /* spatial-marker-baked.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "spatial-marker-baked.png"; sourceTree = "<group>"; };
-		3E7EDD4027F388F200625E56 /* ARKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ARKit.framework; path = System/Library/Frameworks/ARKit.framework; sourceTree = SDKROOT; };
-		3E7EDD4227F388F900625E56 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
-		3E7EDD4427F388FF00625E56 /* SceneKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SceneKit.framework; path = System/Library/Frameworks/SceneKit.framework; sourceTree = SDKROOT; };
-		3E7EDD4627F3890500625E56 /* ModelIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ModelIO.framework; path = System/Library/Frameworks/ModelIO.framework; sourceTree = SDKROOT; };
-		E031D2DA2880C182001E3A27 /* spatial-marker-yellow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "spatial-marker-yellow.png"; sourceTree = "<group>"; };
+		3E209CE02C40496F00C4992C /* GeospatialExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GeospatialExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3E209CE52C40496F00C4992C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		3E209CE72C40497000C4992C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3E209CF12C40519200C4992C /* GeospatialExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeospatialExampleApp.swift; sourceTree = "<group>"; };
+		3E209CF32C4051C400C4992C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		3E209CF52C40551000C4992C /* ARViewContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARViewContainer.swift; sourceTree = "<group>"; };
+		3E209CF72C40823300C4992C /* GeospatialManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeospatialManager.swift; sourceTree = "<group>"; };
+		3E209CFD2C419B2800C4992C /* spatial-marker-baked.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "spatial-marker-baked.png"; sourceTree = "<group>"; };
+		3E209CFE2C419B2800C4992C /* spatial-marker-yellow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "spatial-marker-yellow.png"; sourceTree = "<group>"; };
+		3E209D022C419E1900C4992C /* geospatial_marker.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = geospatial_marker.usdz; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		3E1BD00F268A5E39004480BC /* Frameworks */ = {
+		3E209CDD2C40496F00C4992C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3E7EDD4727F3890500625E56 /* ModelIO.framework in Frameworks */,
-				3E7EDD4527F388FF00625E56 /* SceneKit.framework in Frameworks */,
-				3E7EDD4327F388F900625E56 /* CoreLocation.framework in Frameworks */,
-				3E7EDD4127F388F200625E56 /* ARKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		077940F53D166DCACECC1BEE /* Frameworks */ = {
+		3E209CD72C40496F00C4992C = {
 			isa = PBXGroup;
 			children = (
-				3E7EDD4627F3890500625E56 /* ModelIO.framework */,
-				3E7EDD4427F388FF00625E56 /* SceneKit.framework */,
-				3E7EDD4227F388F900625E56 /* CoreLocation.framework */,
-				3E7EDD4027F388F200625E56 /* ARKit.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		3E1BD009268A5E39004480BC = {
-			isa = PBXGroup;
-			children = (
-				3E1BD014268A5E39004480BC /* GeospatialExample */,
-				077940F53D166DCACECC1BEE /* Frameworks */,
+				3E209CE22C40496F00C4992C /* GeospatialExample */,
+				3E209CE12C40496F00C4992C /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		3E1BD014268A5E39004480BC /* GeospatialExample */ = {
+		3E209CE12C40496F00C4992C /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				E031D2DA2880C182001E3A27 /* spatial-marker-yellow.png */,
-				3E33285A27F3A5B0005C5C5F /* geospatial_marker.obj */,
-				3E7EDD3D27F3872700625E56 /* spatial-marker-baked.png */,
-				3E1BD015268A5E39004480BC /* AppDelegate.h */,
-				3E1BD016268A5E39004480BC /* AppDelegate.m */,
-				3E1BD01B268A5E39004480BC /* ViewController.h */,
-				3E1BD01C268A5E39004480BC /* ViewController.m */,
-				3E1BD01E268A5E39004480BC /* Main.storyboard */,
-				3E1BD021268A5E3B004480BC /* Assets.xcassets */,
-				3E1BD023268A5E3B004480BC /* LaunchScreen.storyboard */,
-				3E1BD026268A5E3B004480BC /* Info.plist */,
-				3E1BD027268A5E3B004480BC /* main.m */,
+				3E209CE02C40496F00C4992C /* GeospatialExample.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3E209CE22C40496F00C4992C /* GeospatialExample */ = {
+			isa = PBXGroup;
+			children = (
+				3E209CE72C40497000C4992C /* Assets.xcassets */,
+				3E209CF32C4051C400C4992C /* Info.plist */,
+				3E209D022C419E1900C4992C /* geospatial_marker.usdz */,
+				3E209CFD2C419B2800C4992C /* spatial-marker-baked.png */,
+				3E209CFE2C419B2800C4992C /* spatial-marker-yellow.png */,
+				3E209CF52C40551000C4992C /* ARViewContainer.swift */,
+				3E209CE52C40496F00C4992C /* ContentView.swift */,
+				3E209CF12C40519200C4992C /* GeospatialExampleApp.swift */,
+				3E209CF72C40823300C4992C /* GeospatialManager.swift */,
 			);
 			path = GeospatialExample;
 			sourceTree = "<group>";
@@ -98,13 +76,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		3E1BD011268A5E39004480BC /* GeospatialExample */ = {
+		3E209CDF2C40496F00C4992C /* GeospatialExample */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3E1BD02B268A5E3B004480BC /* Build configuration list for PBXNativeTarget "GeospatialExample" */;
+			buildConfigurationList = 3E209CEE2C40497000C4992C /* Build configuration list for PBXNativeTarget "GeospatialExample" */;
 			buildPhases = (
-				3E1BD00E268A5E39004480BC /* Sources */,
-				3E1BD00F268A5E39004480BC /* Frameworks */,
-				3E1BD010268A5E39004480BC /* Resources */,
+				3E209CDC2C40496F00C4992C /* Sources */,
+				3E209CDD2C40496F00C4992C /* Frameworks */,
+				3E209CDE2C40496F00C4992C /* Resources */,
 			);
 			buildRules = (
 			);
@@ -114,97 +92,81 @@
 			packageProductDependencies = (
 			);
 			productName = GeospatialExample;
-			productReference = 3EFA88E528810CB600569759 /* GeospatialExample.app */;
+			productReference = 3E209CE02C40496F00C4992C /* GeospatialExample.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		3E1BD00A268A5E39004480BC /* Project object */ = {
+		3E209CD82C40496F00C4992C /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1240;
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1540;
+				LastUpgradeCheck = 1540;
 				TargetAttributes = {
-					3E1BD011268A5E39004480BC = {
-						CreatedOnToolsVersion = 12.4;
+					3E209CDF2C40496F00C4992C = {
+						CreatedOnToolsVersion = 15.4;
 					};
 				};
 			};
-			buildConfigurationList = 3E1BD00D268A5E39004480BC /* Build configuration list for PBXProject "GeospatialExample" */;
-			compatibilityVersion = "Xcode 9.3";
+			buildConfigurationList = 3E209CDB2C40496F00C4992C /* Build configuration list for PBXProject "GeospatialExample" */;
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = 3E1BD009268A5E39004480BC;
-			productRefGroup = 3E1BD009268A5E39004480BC;
+			mainGroup = 3E209CD72C40496F00C4992C;
+			packageReferences = (
+			);
+			productRefGroup = 3E209CE12C40496F00C4992C /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				3E1BD011268A5E39004480BC /* GeospatialExample */,
+				3E209CDF2C40496F00C4992C /* GeospatialExample */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		3E1BD010268A5E39004480BC /* Resources */ = {
+		3E209CDE2C40496F00C4992C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3E7EDD3F27F3872700625E56 /* spatial-marker-baked.png in Resources */,
-				3E33285B27F3A5B0005C5C5F /* geospatial_marker.obj in Resources */,
-				E031D2DB2880C182001E3A27 /* spatial-marker-yellow.png in Resources */,
-				3E1BD025268A5E3B004480BC /* LaunchScreen.storyboard in Resources */,
-				3E1BD022268A5E3B004480BC /* Assets.xcassets in Resources */,
-				3E1BD020268A5E39004480BC /* Main.storyboard in Resources */,
+				3E209D032C419E1900C4992C /* geospatial_marker.usdz in Resources */,
+				3E209D002C419B2800C4992C /* spatial-marker-baked.png in Resources */,
+				3E209D012C419B2800C4992C /* spatial-marker-yellow.png in Resources */,
+				3E209CE82C40497000C4992C /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		3E1BD00E268A5E39004480BC /* Sources */ = {
+		3E209CDC2C40496F00C4992C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3E1BD01D268A5E39004480BC /* ViewController.m in Sources */,
-				3E1BD017268A5E39004480BC /* AppDelegate.m in Sources */,
-				3E1BD028268A5E3B004480BC /* main.m in Sources */,
+				3E209CE62C40496F00C4992C /* ContentView.swift in Sources */,
+				3E209CF22C40519200C4992C /* GeospatialExampleApp.swift in Sources */,
+				3E209CF82C40823300C4992C /* GeospatialManager.swift in Sources */,
+				3E209CF62C40551000C4992C /* ARViewContainer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXVariantGroup section */
-		3E1BD01E268A5E39004480BC /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				3E1BD01F268A5E39004480BC /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-		3E1BD023268A5E3B004480BC /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				3E1BD024268A5E3B004480BC /* Base */,
-			);
-			name = LaunchScreen.storyboard;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
-
 /* Begin XCBuildConfiguration section */
-		3E1BD029268A5E3B004480BC /* Debug */ = {
+		3E209CEC2C40497000C4992C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -234,7 +196,8 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -248,22 +211,26 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_PRECOMPILE_BRIDGING_HEADER = YES;
 			};
 			name = Debug;
 		};
-		3E1BD02A268A5E3B004480BC /* Release */ = {
+		3E209CED2C40497000C4992C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -293,7 +260,8 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -301,60 +269,91 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_PRECOMPILE_BRIDGING_HEADER = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
-		3E1BD02C268A5E3B004480BC /* Debug */ = {
+		3E209CEF2C40497000C4992C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				DEVELOPMENT_TEAM = EQHXZ8M8AV;
-				ENABLE_BITCODE = NO;
-				INFOPLIST_FILE = "$(SRCROOT)/GeospatialExample/Info.plist";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = GeospatialExample/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera permission is needed for AR mode.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Location permission is needed for geospatial localization.";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = "arkit gps";
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = NO;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.google.ARGeospatial;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "Google Development";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
-		3E1BD02D268A5E3B004480BC /* Release */ = {
+		3E209CF02C40497000C4992C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				DEVELOPMENT_TEAM = EQHXZ8M8AV;
-				ENABLE_BITCODE = NO;
-				INFOPLIST_FILE = "$(SRCROOT)/GeospatialExample/Info.plist";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = GeospatialExample/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera permission is needed for AR mode.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Location permission is needed for geospatial localization.";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = "arkit gps";
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = NO;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.google.ARGeospatial;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "Google Development";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -362,25 +361,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		3E1BD00D268A5E39004480BC /* Build configuration list for PBXProject "GeospatialExample" */ = {
+		3E209CDB2C40496F00C4992C /* Build configuration list for PBXProject "GeospatialExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				3E1BD029268A5E3B004480BC /* Debug */,
-				3E1BD02A268A5E3B004480BC /* Release */,
+				3E209CEC2C40497000C4992C /* Debug */,
+				3E209CED2C40497000C4992C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3E1BD02B268A5E3B004480BC /* Build configuration list for PBXNativeTarget "GeospatialExample" */ = {
+		3E209CEE2C40497000C4992C /* Build configuration list for PBXNativeTarget "GeospatialExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				3E1BD02C268A5E3B004480BC /* Debug */,
-				3E1BD02D268A5E3B004480BC /* Release */,
+				3E209CEF2C40497000C4992C /* Debug */,
+				3E209CF02C40497000C4992C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 3E1BD00A268A5E39004480BC /* Project object */;
+	rootObject = 3E209CD82C40496F00C4992C /* Project object */;
 }
