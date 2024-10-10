@@ -1,20 +1,22 @@
-/*
- * Copyright 2019 Google LLC. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+//
+// Copyright 2024 Google LLC. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 import ARCore
+import Foundation
+import Metal
 import SceneKit
 
 /// Contains all objects needed to hold a face mesh. Used for multi-buffering.
@@ -29,7 +31,7 @@ private class FaceMesh {
   var mtlNormalBuffer: MTLBuffer?
 
   /// Buffer containing triangle indices.
-  var indexBuffer: NSMutableData?
+  var indexBuffer: Data?
 
   /// SceneKit geometry source for vertex positions.
   var vertSource = SCNGeometrySource()
@@ -143,10 +145,10 @@ final public class FaceMeshGeometryConverter {
       }
 
       // Creates an index buffer and sets up an element when the index buffer size changes.
-      if faceMesh.indexBuffer?.length != idxBufSize {
-        let indexBuffer = NSMutableData(
+      if faceMesh.indexBuffer?.count != idxBufSize {
+        let indexBuffer = Data(
           bytes: face.mesh.triangleIndices,
-          length: idxBufSize)
+          count: idxBufSize)
         faceMesh.indexBuffer = indexBuffer
         faceMesh.element = SCNGeometryElement(
           data: indexBuffer as Data?,
@@ -160,12 +162,14 @@ final public class FaceMeshGeometryConverter {
       if let vertexBuffer = faceMesh.mtlVertexBuffer,
         let textureBuffer = faceMesh.mtlTexBuffer,
         let normalBuffer = faceMesh.mtlNormalBuffer,
-        let indexBuffer = faceMesh.indexBuffer
+        var indexBuffer = faceMesh.indexBuffer
       {
         memcpy(vertexBuffer.contents(), face.mesh.vertices, vertBufSize)
         memcpy(textureBuffer.contents(), face.mesh.textureCoordinates, texBufSize)
         memcpy(normalBuffer.contents(), face.mesh.normals, normalBufSize)
-        memcpy(indexBuffer.mutableBytes, face.mesh.triangleIndices, idxBufSize)
+        _ = indexBuffer.withUnsafeMutableBytes { pointer in
+          memcpy(pointer.baseAddress, face.mesh.triangleIndices, idxBufSize)
+        }
       }
 
       // If any of the sources or element changed, reallocate the geometry.
@@ -178,5 +182,4 @@ final public class FaceMeshGeometryConverter {
 
     return faceMesh.geometry
   }
-
 }

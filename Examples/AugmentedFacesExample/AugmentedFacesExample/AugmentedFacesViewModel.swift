@@ -1,42 +1,46 @@
-/*
- * Copyright 2019 Google LLC. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+//
+// Copyright 2024 Google LLC. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 import ARCore
 import AVFoundation
+import CoreGraphics
+import CoreImage
 import CoreMedia
 import CoreMotion
+import Foundation
 import SceneKit
 import UIKit
+import simd
 
 /// Demonstrates how to use ARCore Augmented Faces with SceneKit.
-public final class FacesViewController: UIViewController {
+class AugmentedFacesViewModel: NSObject, ObservableObject {
 
   // MARK: - Member Variables
-  private var needToShowFatalError = false
-  private var alertWindowTitle = "Nothing"
-  private var alertMessage = "Nothing"
-  private var viewDidAppearReached = false
+
+  @Published var showsAlert = false
+  @Published private(set) var alertWindowTitle = ""
+  @Published private(set) var alertMessage = ""
+  var viewSize: CGSize?
 
   // MARK: - Camera / Scene properties
 
   private var captureDevice: AVCaptureDevice?
   private var captureSession: AVCaptureSession?
-  private var videoFieldOfView = Float(0)
-  private lazy var cameraImageLayer = CALayer()
-  private lazy var sceneView = SCNView()
+  @Published private(set) var scene: SCNScene?
+  @Published private(set) var pointOfView = SCNNode()
   private lazy var sceneCamera = SCNCamera()
   private lazy var motionManager = CMMotionManager()
 
@@ -55,8 +59,8 @@ public final class FacesViewController: UIViewController {
 
   // MARK: - Implementation methods
 
-  override public func viewDidLoad() {
-    super.viewDidLoad()
+  override init() {
+    super.init()
 
     if !setupScene() {
       return
@@ -69,25 +73,17 @@ public final class FacesViewController: UIViewController {
     }
 
     do {
-      faceSession = try GARAugmentedFaceSession(fieldOfView: videoFieldOfView)
+      faceSession = try GARAugmentedFaceSession(
+        fieldOfView: captureDevice?.activeFormat.videoFieldOfView ?? 0)
     } catch {
       alertWindowTitle = "A fatal error occurred."
       alertMessage = "Failed to create session. Error description: \(error)"
-      popupAlertWindowOnError(alertWindowTitle: alertWindowTitle, alertMessage: alertMessage)
-    }
-  }
-
-  override public func viewDidAppear(_ animated: Bool) {
-    super.viewDidAppear(animated)
-
-    viewDidAppearReached = true
-
-    if needToShowFatalError {
-      popupAlertWindowOnError(alertWindowTitle: alertWindowTitle, alertMessage: alertMessage)
+      showsAlert = true
     }
   }
 
   /// Create the scene view from a scene and supporting nodes, and add to the view.
+  ///
   /// The scene is loaded from 'fox_face.scn' which was created from 'canonical_face_mesh.fbx', the
   /// canonical face mesh asset.
   /// https://developers.google.com/ar/develop/developer-guides/creating-assets-for-augmented-faces
@@ -99,9 +95,10 @@ public final class FacesViewController: UIViewController {
     else {
       alertWindowTitle = "A fatal error occurred."
       alertMessage = "Failed to load face scene!"
-      popupAlertWindowOnError(alertWindowTitle: alertWindowTitle, alertMessage: alertMessage)
+      showsAlert = true
       return false
     }
+    self.scene = scene
 
     // SceneKit uses meters for units, while the canonical face mesh asset uses centimeters.
     modelRoot.simdScale = simd_float3(1, 1, 1) * 0.01
@@ -113,19 +110,7 @@ public final class FacesViewController: UIViewController {
     faceNode.addChildNode(faceOccluderNode)
     scene.rootNode.addChildNode(faceNode)
 
-    let cameraNode = SCNNode()
-    cameraNode.camera = sceneCamera
-    scene.rootNode.addChildNode(cameraNode)
-
-    sceneView.scene = scene
-    sceneView.frame = view.bounds
-    sceneView.delegate = self
-    sceneView.rendersContinuously = true
-    sceneView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-    sceneView.backgroundColor = .clear
-    // Flip 'x' to mirror content to mimic 'selfie' mode
-    sceneView.layer.transform = CATransform3DMakeScale(-1, 1, 1)
-    view.addSubview(sceneView)
+    pointOfView.camera = sceneCamera
 
     faceTextureMaterial.diffuse.contents = faceImage
     // SCNMaterial does not premultiply alpha even with blendMode set to alpha, so do it manually.
@@ -145,7 +130,7 @@ public final class FacesViewController: UIViewController {
     else {
       alertWindowTitle = "A fatal error occurred."
       alertMessage = "Failed to get device from AVCaptureDevice."
-      popupAlertWindowOnError(alertWindowTitle: alertWindowTitle, alertMessage: alertMessage)
+      showsAlert = true
       return false
     }
 
@@ -154,7 +139,7 @@ public final class FacesViewController: UIViewController {
     else {
       alertWindowTitle = "A fatal error occurred."
       alertMessage = "Failed to get device input from AVCaptureDeviceInput."
-      popupAlertWindowOnError(alertWindowTitle: alertWindowTitle, alertMessage: alertMessage)
+      showsAlert = true
       return false
     }
 
@@ -169,24 +154,20 @@ public final class FacesViewController: UIViewController {
     captureSession = session
     captureDevice = device
 
-    videoFieldOfView = captureDevice?.activeFormat.videoFieldOfView ?? 0
-
-    cameraImageLayer.contentsGravity = .center
-    cameraImageLayer.frame = self.view.bounds
-    view.layer.insertSublayer(cameraImageLayer, at: 0)
-
     // Start capturing images from the capture session once permission is granted.
-    getVideoPermission(permissionHandler: { granted in
+    getVideoPermission { [weak self] granted in
+      guard let self else { return }
       guard granted else {
         NSLog("Permission not granted to use camera.")
         self.alertWindowTitle = "Alert"
         self.alertMessage = "Permission not granted to use camera."
-        self.popupAlertWindowOnError(
-          alertWindowTitle: self.alertWindowTitle, alertMessage: self.alertMessage)
+        self.showsAlert = true
         return
       }
-      self.captureSession?.startRunning()
-    })
+      DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        self?.captureSession?.startRunning()
+      }
+    }
 
     return true
   }
@@ -197,7 +178,7 @@ public final class FacesViewController: UIViewController {
     guard motionManager.isDeviceMotionAvailable else {
       alertWindowTitle = "Alert"
       alertMessage = "Device does not have motion sensors."
-      popupAlertWindowOnError(alertWindowTitle: alertWindowTitle, alertMessage: alertMessage)
+      showsAlert = true
       return false
     }
     motionManager.deviceMotionUpdateInterval = 0.01
@@ -242,49 +223,28 @@ public final class FacesViewController: UIViewController {
     // 'forward' (Z+) opposite of SceneKit's forward (Z-), so rotate to orient correctly.
     node.simdLocalRotate(by: simd_quatf(angle: .pi, axis: simd_float3(0, 1, 0)))
   }
-
-  private func popupAlertWindowOnError(alertWindowTitle: String, alertMessage: String) {
-    if !self.viewDidAppearReached {
-      self.needToShowFatalError = true
-      // Then the process will proceed to viewDidAppear, which will popup an alert window when needToShowFatalError is true.
-      return
-    }
-    // viewDidAppearReached is true, so we can pop up window now.
-    let alertController = UIAlertController(
-      title: alertWindowTitle, message: alertMessage, preferredStyle: .alert)
-    alertController.addAction(
-      UIAlertAction(
-        title: NSLocalizedString("OK", comment: "Default action"), style: .default,
-        handler: { _ in
-          self.needToShowFatalError = false
-        }))
-    self.present(alertController, animated: true, completion: nil)
-  }
-
 }
 
 // MARK: - Camera delegate
 
-extension FacesViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
+extension AugmentedFacesViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
 
   public func captureOutput(
     _ output: AVCaptureOutput,
     didOutput sampleBuffer: CMSampleBuffer,
     from connection: AVCaptureConnection
   ) {
-    guard let imgBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
-      let deviceMotion = motionManager.deviceMotion
+    guard let imgBuffer = sampleBuffer.imageBuffer, let deviceMotion = motionManager.deviceMotion
     else {
       NSLog("In captureOutput, imgBuffer or deviceMotion is nil.")
       return
     }
 
-    let frameTime = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
-
+    let frameTime = sampleBuffer.presentationTimeStamp.seconds
     // Use the device's gravity vector to determine which direction is up for a face. This is the
     // positive counter-clockwise rotation of the device relative to landscape left orientation.
     let rotation = 2 * .pi - atan2(deviceMotion.gravity.x, deviceMotion.gravity.y) + .pi / 2
-    let rotationDegrees = (UInt)(rotation * 180 / .pi) % 360
+    let rotationDegrees = UInt(rotation * 180 / .pi) % 360
 
     faceSession?.update(with: imgBuffer, timestamp: frameTime, recognitionRotation: rotationDegrees)
   }
@@ -293,7 +253,21 @@ extension FacesViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
 
 // MARK: - Scene Renderer delegate
 
-extension FacesViewController: SCNSceneRendererDelegate {
+extension AugmentedFacesViewModel: SCNSceneRendererDelegate {
+
+  /// Calculates the rectangle to crop the camera image to so it fits the viewport.
+  ///
+  /// - Parameters:
+  ///   - viewSize: The size of the view.
+  ///   - extent: The extent of the `CIImage`.
+  /// - Returns: the rectangle to crop to.
+  private func cropRect(for viewSize: CGSize, extent: CGRect) -> CGRect {
+    CGRect(
+      x: extent.maxX / 2 - viewSize.width / 2,
+      y: extent.minY / 2 - viewSize.height / 2,
+      width: viewSize.width,
+      height: viewSize.height)
+  }
 
   public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
     guard let frame = faceSession?.currentFrame else {
@@ -312,31 +286,26 @@ extension FacesViewController: SCNSceneRendererDelegate {
       updateTransform(face.transform(for: .foreheadLeft), for: foreheadLeftNode)
       updateTransform(face.transform(for: .foreheadRight), for: foreheadRightNode)
     }
+    guard let viewSize else { return }
 
     // Set the scene camera's transform to the projection matrix for this frame.
-    sceneCamera.projectionTransform = SCNMatrix4.init(
+    sceneCamera.projectionTransform = SCNMatrix4(
       frame.projectionMatrix(
-        forViewportSize: cameraImageLayer.bounds.size,
+        forViewportSize: viewSize,
         presentationOrientation: .portrait,
         mirrored: false,
         zNear: 0.05,
-        zFar: 100)
-    )
+        zFar: 100))
 
-    // Update the camera image layer's transform to the display transform for this frame.
-    CATransaction.begin()
-    CATransaction.setAnimationDuration(0)
-    cameraImageLayer.contents = frame.capturedImage as CVPixelBuffer
-    cameraImageLayer.setAffineTransform(
-      frame.displayTransform(
-        forViewportSize: cameraImageLayer.bounds.size,
-        presentationOrientation: .portrait,
-        mirrored: true)
-    )
-    CATransaction.commit()
+    let ciImage = CIImage(cvPixelBuffer: frame.capturedImage).transformed(
+      by: frame.displayTransform(
+        forViewportSize: viewSize,
+        presentationOrientation: .portraitUpsideDown,
+        mirrored: false))
+    scene?.background.contents = CIContext().createCGImage(
+      ciImage, from: cropRect(for: viewSize, extent: ciImage.extent))
 
     // Only show AR content when a face is detected.
-    sceneView.scene?.rootNode.isHidden = frame.face == nil
+    scene?.rootNode.isHidden = frame.face == nil
   }
-
 }
