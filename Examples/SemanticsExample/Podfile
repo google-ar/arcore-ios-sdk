@@ -1,4 +1,4 @@
 target 'SemanticsExample'
 use_frameworks!
 platform :ios, '15.0'
-pod 'ARCore/Semantics', '~> 1.47.0'
+pod 'ARCore/Semantics', '~> 1.48.0'
