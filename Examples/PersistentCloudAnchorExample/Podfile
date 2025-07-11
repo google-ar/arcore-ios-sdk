@@ -1,4 +1,4 @@
 target 'PersistentCloudAnchorExample'
 use_frameworks!
 platform :ios, '17.0'
-pod 'ARCore/CloudAnchors', '~> 1.49.0'
+pod 'ARCore/CloudAnchors', '~> 1.50.0'
