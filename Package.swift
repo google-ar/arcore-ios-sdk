@@ -51,7 +51,7 @@ let package = Package(
     .binaryTarget(
       name: "ARCoreCloudAnchors",
       url: "https://dl.google.com/arcore/swiftpm/1.57.0/CloudAnchors.zip",
-      checksum: "7e37f28420b7586dc3222831e1dc28546f33fdf21caadf8eff3010b337eb28c2"
+      checksum: "4a0bfcd93f5e4eea2e2a2ebf0ddacf9c3f288c09d70937c469268b00de8d538e"
     ),
     .target(
       name: "CloudAnchors",
